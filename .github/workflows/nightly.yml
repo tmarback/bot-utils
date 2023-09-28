@@ -1,0 +1,26 @@
+# Nightly workflow
+# Performs non-crucial checks that shouldn't mark a commit as failing
+
+name: Nightly
+
+on:
+  schedule:
+    # Run at midnight UTC
+    - cron:  '0 0 * * *'
+
+concurrency: nightly
+jobs:
+  style:
+    name: Style
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out pull request
+        uses: actions/checkout@v3
+      - name: Set up Java and Maven
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+      - name: Run style checker
+        run: mvn validate -B -P style,strict

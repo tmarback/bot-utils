@@ -1,0 +1,227 @@
+# Workflow for checking and releasing all new commits to main and tags
+
+name: CI/CD
+
+on:
+  push:
+    branches: # Trigger on commits to main
+      - main
+    tags:
+      - v* # Also version tags
+
+concurrency: 
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main Git repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+      - name: Run tests
+        run: mvn clean verify -B
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main Git repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+          submodules: 'true'
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+      - name: Run static checks
+        run: mvn compile -B -P lint,strict
+
+  prepare:
+    name: Prepare Metadata
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      type: ${{ steps.get-type.outputs.type }}
+      site: ${{ steps.get-site.outputs.version }}
+    steps:
+      - name: Check out GH Pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages # Github Pages branch
+      - name: Get latest site version
+        id: get-site-version
+        run: |
+          git fetch --update-shallow --tags --depth=3
+          VER="$( git describe --tags --abbrev=0 --match 'v*.*.*-site' | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' || echo '0.0.0' )"
+          echo "version=${VER}" >> $GITHUB_OUTPUT
+      
+      - name: Check out main Git repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with: # running setup-java again overwrites the settings.xml
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+
+      - name: Determine version
+        id: get-version
+        run: echo "version=$( mvn help:evaluate '-Dexpression=project.version' -q -DforceStdout )" >> $GITHUB_OUTPUT
+      - name: Determine type
+        id: get-type
+        run: |
+          if [[ "${{ steps.get-version.outputs.version }}" == *-SNAPSHOT ]]; then
+            echo "type=snapshot" >> $GITHUB_OUTPUT
+          else
+            echo "type=release" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x' # Version range or exact version of a Python version to use, using SemVer's version range syntax
+      - name: Determine site tag
+        id: get-site
+        run: |
+          PREV_SITE_VER="${{ steps.get-site-version.outputs.version }}"
+          NEW_VER="${{ steps.get-version.outputs.version }}"
+          RELEASE_TYPE="${{ steps.get-type.outputs.type }}"
+          DIFF="$( python .github/scripts/compare_semver.py $NEW_VER $PREV_SITE_VER )"
+          if [ "$RELEASE_TYPE" = "release" ] && [ "$DIFF" -gt 0 ]; then
+            echo "version=v${NEW_VER}-site" >> $GITHUB_OUTPUT
+          else
+            echo "version=none" >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    name: Deploy Version
+    needs: [ test, lint, prepare ]
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag' || needs.prepare.outputs.type == 'snapshot'
+    steps:
+      - name: Check out main Git repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with: # running setup-java again overwrites the settings.xml
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: NEXUS_USERNAME # env variable for username in deploy
+          server-password: NEXUS_PASSWORD # env variable for token in deploy
+          gpg-private-key: ${{ secrets.gpg_private_key }} # Value of the GPG private key to import
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+      - name: Publish to OSSRH
+        run: mvn deploy -B -P deploy,ossrh -Dmaven.test.skip=true
+        env:
+          NEXUS_USERNAME: ${{ secrets.nexus_username }}
+          NEXUS_PASSWORD: ${{ secrets.nexus_password }}
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+          MAVEN_OPTS: "--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.desktop/java.awt.font=ALL-UNNAMED"
+          # https://issues.sonatype.org/browse/OSSRH-66257
+
+      - name: Set up Github Packages
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          gpg-passphrase: GPG_PASSPHRASE # env variable for GPG private key passphrase
+      - name: Publish to GitHub Packages
+        run: mvn deploy -B -P deploy,github -Dmaven.test.skip=true
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }} 
+          GPG_PASSPHRASE: ${{ secrets.gpg_passphrase }}
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release
+          path: |
+            target/*.jar
+            target/*.jar.asc
+
+  site-build:
+    name: Build Site
+    needs: [ test, lint ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main Git repository
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.sha }}
+      - name: Set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+      - name: Run tests # If it got this far, it *should* be guaranteed to pass, but needed for the report
+        run: mvn clean verify -B
+      - name: Build project site
+        run: mvn site -B
+      - name: Tarball project site
+        run: tar -czf site.tar.gz -C target/site .
+      - name: Upload site artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: site
+          path: site.tar.gz
+
+  site-deploy:
+    name: Deploy Site
+    needs: [ prepare, deploy, site-build ]
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.site != 'none'
+    concurrency: cd-site-${{ needs.prepare.outputs.version }}
+    steps:
+      - name: Check out GH Pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages # Github Pages branch
+
+      - name: Delete existing site files except CNAME
+        run: |
+          find . ! -path './.git/*' ! -path './.git' ! -path . -type d -exec rm -rf {} +
+          find . ! -path './.git/*' ! -path './CNAME' -type f -exec rm -f {} +
+      - name: Download site artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: site
+      - name: Unpack the artifact
+        run: tar -xzf site.tar.gz
+      - name: Delete the (local) artifact
+        run: rm site.tar.gz
+
+      - name: Configure git commiter identity
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+      - name: Commit new files
+        run: |
+          git add -A
+          git commit -m "Updated project site to release version ${{ needs.prepare.outputs.version }}"
+          git tag -a ${{ needs.prepare.outputs.site }} -m "Site for release version ${{ needs.prepare.outputs.version }}"
+      - name: Push changes
+        run: |
+          git push origin gh-pages
+          git push origin ${{ needs.prepare.outputs.site }}
