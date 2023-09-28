@@ -1,4 +1,4 @@
 /**
  * Root project package.
  */
-package dev.sympho.CHANGEME;
+package dev.sympho.bot_utils;

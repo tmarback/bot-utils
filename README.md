@@ -1,4 +1,10 @@
-# CHANGEME
-[![Latest](https://maven-badges.herokuapp.com/maven-central/dev.sympho/CHANGEME/badge.svg)](https://search.maven.org/artifact/dev.sympho/CHANGEME) [![javadoc](https://javadoc.io/badge2/dev.sympho/CHANGEME/javadoc.svg)](https://javadoc.io/doc/dev.sympho/CHANGEME) [![CI/CD](https://github.com/tmarback/CHANGEME/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/tmarback/CHANGEME/actions/workflows/ci-cd.yml) [![Nightly](https://github.com/tmarback/CHANGEME/actions/workflows/nightly.yml/badge.svg)](https://github.com/tmarback/CHANGEME/actions/workflows/nightly.yml)
+# bot-utils
+[![Latest](https://maven-badges.herokuapp.com/maven-central/dev.sympho/bot-utils/badge.svg)](https://search.maven.org/artifact/dev.sympho/bot-utils) [![javadoc](https://javadoc.io/badge2/dev.sympho/bot-utils/javadoc.svg)](https://javadoc.io/doc/dev.sympho/bot-utils) [![CI/CD](https://github.com/tmarback/bot-utils/actions/workflows/ci-cd.yml/badge.svg?branch=main)](https://github.com/tmarback/bot-utils/actions/workflows/ci-cd.yml) [![Nightly](https://github.com/tmarback/bot-utils/actions/workflows/nightly.yml/badge.svg)](https://github.com/tmarback/bot-utils/actions/workflows/nightly.yml)
 
-CHANGEME
+Utility tools for Discord bots that use Discord4J.
+
+TODO: Instructions
+
+## Compiling
+
+TODO
