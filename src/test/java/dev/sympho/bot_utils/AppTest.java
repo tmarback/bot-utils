@@ -1,6 +1,7 @@
 package dev.sympho.bot_utils;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 /**
