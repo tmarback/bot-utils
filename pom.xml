@@ -51,6 +51,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
         <checker.version>3.38.0</checker.version> <!-- Version of the Checker framework used -->
+        <d4j.version>3.2.4</d4j.version> <!-- Version of Discord4J used -->
         <reporter.version>1.2.1</reporter.version> <!-- Version of the tree reporter used -->
     </properties>
 
@@ -77,6 +78,26 @@
     </dependencyManagement>
 
     <dependencies>
+
+        <dependency>
+            <groupId>com.discord4j</groupId>
+            <artifactId>discord4j-core</artifactId>
+            <version>${d4j.version}</version>
+            <exclusions>
+
+                <exclusion>
+                    <groupId>com.austinv11.servicer</groupId>
+                    <artifactId>Servicer</artifactId>
+                </exclusion>
+
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.13.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -227,6 +248,9 @@
                         </tags>
                         <links>
                             <link>https://checkerframework.org/api/</link>
+                            <link>https://projectreactor.io/docs/core/release/api/</link>
+                            <link>https://javadoc.io/doc/com.discord4j/discord4j-core/${d4j.version}/</link>
+                            <link>https://javadoc.io/doc/com.discord4j/discord4j-common/${d4j.version}/</link>
                         </links>
                     </configuration>
                 </plugin>
