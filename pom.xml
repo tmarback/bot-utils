@@ -80,6 +80,12 @@
     <dependencies>
 
         <dependency>
+            <groupId>dev.sympho</groupId>
+            <artifactId>reactor-utils</artifactId>
+            <version>0.2.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.discord4j</groupId>
             <artifactId>discord4j-core</artifactId>
             <version>${d4j.version}</version>
@@ -106,6 +112,12 @@
         </dependency>
 
         <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>
             <version>${checker.version}</version>
@@ -115,6 +127,14 @@
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-util</artifactId>
             <version>${checker.version}</version>
+        </dependency>
+
+        <dependency>
+            <!-- the annotation processor, compile only -->
+            <groupId>org.immutables</groupId>
+            <artifactId>value</artifactId>
+            <version>2.9.2</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Testing dependencies -->
@@ -633,7 +653,7 @@
                                     <compilerArgs>
                                         <arg>-Xlint:all,-processing,-requires-transitive-automatic,-requires-automatic</arg>
                                         <!-- <arg>-AreportEvalWarns</arg> --> <!-- TODO: Too many issues for the time being -->
-                                        <!-- <arg>-Astubs=./stubs</arg> --> <!-- Uncomment if using stubs -->
+                                        <arg>-Astubs=./stubs</arg>
                                         <arg>-AstubWarnIfNotFoundIgnoresClasses</arg>
                                         <!-- Say which checker threw the error or warning -->
                                         <arg>-AshowPrefixInWarningMessages</arg>
