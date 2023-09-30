@@ -80,17 +80,45 @@ public final class HttpClientUtils {
         }
 
         /**
+         * Configures an HTTP client to use with this endpoint type.
+         *
+         * @param client The client to configure.
+         * @param dnsRetryPolicy The DNS retry policy to use.
+         * @return The configured client.
+         */
+        public HttpClient configureClient( HttpClient client, final Retry dnsRetryPolicy ) {
+
+            client = addDnsRetry( client, dnsRetryPolicy );
+            client = enableMetrics( client, this );
+            return client;
+
+        }
+
+        /**
+         * Configures an HTTP client to use with this endpoint type,
+         * using the {@link #DEFAULT_DNS_RETRY_POLICY default retry policy}.
+         *
+         * @param client The client to configure.
+         * @return The configured client.
+         * @see #configureClient(HttpClient, Retry)
+         * @see #DEFAULT_DNS_RETRY_POLICY
+         */
+        public HttpClient configureClient( final HttpClient client ) {
+
+            return configureClient( client, DEFAULT_DNS_RETRY_POLICY );
+
+        }
+
+        /**
          * Creates and configures an HTTP client to use with this endpoint type.
          *
          * @param dnsRetryPolicy The DNS retry policy to use.
          * @return The configured client.
+         * @see #configureClient(HttpClient, Retry)
          */
         public HttpClient configureClient( final Retry dnsRetryPolicy ) {
 
-            var client = ReactorResources.DEFAULT_HTTP_CLIENT.get();
-            client = addDnsRetry( client, dnsRetryPolicy );
-            client = enableMetrics( client, this );
-            return client;
+            return configureClient( ReactorResources.DEFAULT_HTTP_CLIENT.get(), dnsRetryPolicy );
 
         }
 
