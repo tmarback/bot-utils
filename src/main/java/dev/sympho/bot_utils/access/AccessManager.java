@@ -6,6 +6,11 @@ import reactor.core.publisher.Mono;
 
 /**
  * A manager that provides access validators for different execution contexts.
+ * 
+ * <p>The {@link #basic() most basic} manager creates validators that simply check if the
+ * user belongs to the given group; however, manager implementations are free to customize
+ * access control by checking additional context information, external state, or even
+ * dynamically applying different validation rules depending on the context.
  *
  * @version 1.0
  * @since 1.0
