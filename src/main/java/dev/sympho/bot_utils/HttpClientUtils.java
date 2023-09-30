@@ -94,6 +94,20 @@ public final class HttpClientUtils {
 
         }
 
+        /**
+         * Creates and configures an HTTP client to use with this endpoint type,
+         * using the {@link #DEFAULT_DNS_RETRY_POLICY default retry policy}.
+         *
+         * @return The configured client.
+         * @see #configureClient(Retry)
+         * @see #DEFAULT_DNS_RETRY_POLICY
+         */
+        public HttpClient configureClient() {
+
+                return configureClient( DEFAULT_DNS_RETRY_POLICY );
+
+        }
+
     }
 
     /** Do not instantiate. */
