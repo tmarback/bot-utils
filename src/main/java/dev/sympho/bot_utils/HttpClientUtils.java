@@ -104,7 +104,7 @@ public final class HttpClientUtils {
          */
         public HttpClient configureClient() {
 
-                return configureClient( DEFAULT_DNS_RETRY_POLICY );
+            return configureClient( DEFAULT_DNS_RETRY_POLICY );
 
         }
 
@@ -150,6 +150,21 @@ public final class HttpClientUtils {
                         "DNS query {} reached the retry limit", ex.question()
                 ) )
                 .doOnSubscribe( s -> LOGGER.trace( "Hooking on connection" ) );
+
+    }
+
+    /**
+     * Creates a function that adds DNS retry capabilities to a connection mono, using the 
+     * {@link #DEFAULT_DNS_RETRY_POLICY default retry policy}.
+     *
+     * @return The conversion function.
+     * @see #addDnsRetry(Retry)
+     * @see #DEFAULT_DNS_RETRY_POLICY
+     * @apiNote Use with {@link HttpClient#mapConnect(java.util.function.Function)}.
+     */
+    public static Function<Mono<? extends Connection>, Mono<? extends Connection>> addDnsRetry() {
+
+        return addDnsRetry( DEFAULT_DNS_RETRY_POLICY );
 
     }
 
