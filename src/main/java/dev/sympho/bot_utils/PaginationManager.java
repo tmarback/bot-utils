@@ -181,7 +181,7 @@ public class PaginationManager {
             // Get associated paginator
             final var paginator = paginators.get( id );
             if ( paginator == null ) {
-                return ctx.getEvent()
+                return ctx.event()
                         .reply( "Page type not recognized" )
                         .withEphemeral( true );
             }
@@ -190,7 +190,7 @@ public class PaginationManager {
             return paginator.requiredGroup.belongs( ctx )
                     .flatMap( b -> {
 
-                        final var event = ctx.getEvent();
+                        final var event = ctx.event();
 
                         if ( b ) {
                             // Membership validated, update page

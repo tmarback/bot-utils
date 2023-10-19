@@ -1,5 +1,7 @@
 package dev.sympho.bot_utils.access;
 
+import java.util.function.Supplier;
+
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import reactor.core.publisher.Mono;
@@ -19,12 +21,33 @@ import reactor.core.publisher.Mono;
 public interface AccessManager {
 
     /**
+     * Validates that an access is legal.
+     *
+     * @param context The access context.
+     * @param group The required group.
+     * @param membershipCheck A function that applies {@link Group#belongs(ChannelAccessContext)}
+     *                        or {@link GuildGroup#belongs(AccessContext)} (as appropriate).
+     * @return Whether the access is allowed.
+     */
+    Mono<Boolean> doValidate( 
+            AccessContext context, 
+            Group group, 
+            Supplier<Mono<Boolean>> membershipCheck 
+    );
+
+    /**
      * Creates an access validator under the given context.
      *
      * @param context The access context for the current execution.
      * @return The appropriate access validator.
      */
-    AccessValidator validator( ChannelAccessContext context );
+    default ChannelAccessValidator validator( final ChannelAccessContext context ) {
+        return group -> doValidate( context, group, () -> group.belongs( context ) );
+    }
+
+    default AccessValidator validator( final AccessContext context ) {
+        return group -> doValidate( context, group, () -> group.belongs( context ) );
+    }
 
     /**
      * Creates a manager for which all validators always allow access.
@@ -36,7 +59,7 @@ public interface AccessManager {
     @SideEffectFree
     static AccessManager alwaysAllow() {
 
-        return ctx -> group -> Mono.just( true );
+        return ( ctx, g, check ) -> Mono.just( true );
 
     }
 
@@ -50,7 +73,7 @@ public interface AccessManager {
     @SideEffectFree
     static AccessManager alwaysDeny() {
 
-        return ctx -> group -> Mono.just( false );
+        return ( ctx, g, check ) -> Mono.just( false );
 
     }
 
@@ -64,7 +87,7 @@ public interface AccessManager {
     @SideEffectFree
     static AccessManager basic() {
 
-        return ctx -> group -> group.belongs( ctx );
+        return ( ctx, g, check ) -> check.get();
 
     }
 
@@ -77,9 +100,9 @@ public interface AccessManager {
      * @return The manager.
      */
     @SideEffectFree
-    static AccessManager overridable( final Group overrideGroup ) {
+    static AccessManager overridable( final GuildGroup overrideGroup ) {
 
-        return ctx -> group -> group.belongs( ctx )
+        return ( ctx, g, check ) -> check.get()
                 .filter( Boolean::booleanValue ) // Make empty if not allowed
                 .switchIfEmpty( Mono.defer( // If not allowed, check override
                         () -> overrideGroup.belongs( ctx ) 

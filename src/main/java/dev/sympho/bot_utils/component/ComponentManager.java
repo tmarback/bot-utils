@@ -16,19 +16,12 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.sympho.bot_utils.access.AccessException;
 import dev.sympho.bot_utils.access.AccessManager;
-import dev.sympho.bot_utils.access.AccessValidator;
-import dev.sympho.bot_utils.access.ChannelAccessContext;
-import dev.sympho.bot_utils.access.Group;
-import discord4j.common.util.Snowflake;
+import dev.sympho.bot_utils.access.NamedGroup;
+import dev.sympho.bot_utils.event.ComponentContext;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
-import discord4j.core.object.command.Interaction;
-import discord4j.core.object.entity.Guild;
-import discord4j.core.object.entity.Member;
-import discord4j.core.object.entity.Message;
-import discord4j.core.object.entity.User;
-import discord4j.core.object.entity.channel.MessageChannel;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 
@@ -45,7 +38,7 @@ import reactor.core.publisher.Mono;
  */
 public abstract class ComponentManager<
                 E extends @NonNull ComponentInteractionEvent, 
-                C extends ComponentManager.@NonNull ComponentContext<E>,
+                C extends @NonNull ComponentContext,
                 HF extends ComponentManager.@NonNull HandlerFunction<C>,
                 H extends ComponentManager.@NonNull Handler<H, HF>,
                 HE extends ComponentManager.@NonNull HandlerEntry<H>
@@ -179,10 +172,27 @@ public abstract class ComponentManager<
      * @param context The interaction context.
      * @param handler The invoked handler.
      * @return A mono that completes empty if the interaction is allowed, otherwise
-     *         issuing an error message to be sent to the user.
+     *         issuing an error message to be sent to the user. Additionally, it may
+     *         result in an {@link AccessException} error to indicate an access issue.
      */
     @SideEffectFree
     protected abstract Mono<String> validateInteraction( C context, H handler );
+
+    /**
+     * Reports an error back to the user.
+     *
+     * @param context The event context.
+     * @param message The error message.
+     * @return A Mono that completes after the error is reported.
+     */
+    @SideEffectFree
+    private Mono<?> reportFailure( final C context, final String message ) {
+
+        return context.event()
+                .reply( message )
+                .withEphemeral( true ); // Don't spam errors for everyone
+
+    }
 
     /**
      * Creates a handler function that just reports an error to the user.
@@ -193,9 +203,7 @@ public abstract class ComponentManager<
     @SideEffectFree
     private HandlerFunction<C> validationFailReporter( final String error ) {
 
-        return ( ctx, args ) -> ctx.getEvent()
-                .reply( error )
-                .withEphemeral( true ); // Don't spam errors for everyone
+        return ( ctx, args ) -> reportFailure( ctx, error );
 
     }
 
@@ -228,6 +236,15 @@ public abstract class ComponentManager<
                 .map( this::validationFailReporter )
                 .defaultIfEmpty( handler.handler() ) 
                 .flatMap( h -> h.apply( context, args ) )
+                .cast( Object.class )
+                .onErrorResume( AccessException.class, ex -> {
+                    final var message = ex.group instanceof NamedGroup g
+                            ? String.format( 
+                                "Only users in the %s group can do this.",
+                                g.name()
+                            ) : "You are not allowed to do this.";
+                    return reportFailure( context, message );
+                } )
                 .doOnError( e -> logger.error( "Handler ID " + id + " threw an error", e ) )
                 .onErrorComplete();
 
@@ -268,7 +285,7 @@ public abstract class ComponentManager<
      * @since 1.0
      */
     @FunctionalInterface
-    protected interface HandlerFunction<C extends @NonNull ComponentContext<?>> 
+    protected interface HandlerFunction<C extends @NonNull ComponentContext> 
             extends BiFunction<C, String, Mono<?>> {
 
         /**
@@ -276,7 +293,9 @@ public abstract class ComponentManager<
          *
          * @param context The interaction context.
          * @param args The argument string encoded in the components's custom ID. May be empty.
-         * @return A Mono that completes once handling is completed.
+         * @return A Mono that completes once handling is completed. It may result in an 
+         *         {@link AccessException} error to indicate that the user does not have access
+         *         to perform this interaction.
          */
         @Override
         Mono<?> apply( C context, String args );
@@ -334,126 +353,6 @@ public abstract class ComponentManager<
          * @return The handler to use.
          */
         H handler();
-
-    }
-
-    /**
-     * The execution context of a component being interacted with. 
-     *
-     * @param <E> The event type.
-     * @since 1.0
-     */
-    public static class ComponentContext<E extends @NonNull ComponentInteractionEvent> 
-            implements ChannelAccessContext, AccessValidator {
-        
-        /** The triggering event. */
-        private final E event;
-        /** The access validator. */
-        private final AccessValidator validator;
-
-        /**
-         * Creates a new instance.
-         *
-         * @param event The triggering event.
-         * @param accessManager The access manager to use.
-         */
-        @SuppressWarnings( "nullness:argument" ) // Initialized enough
-        protected ComponentContext( final E event, final AccessManager accessManager ) {
-
-            this.event = event;
-            this.validator = accessManager.validator( this );
-            
-        }
-
-        /**
-         * Retrieves the triggering event.
-         *
-         * @return The event.
-         */
-        public E getEvent() {
-            return event;
-        }
-
-        @Override
-        public GatewayDiscordClient getClient() {
-            return event.getClient();
-        }
-
-        @Override
-        public Mono<Guild> getGuild() {
-            return event.getInteraction().getGuild();
-        }
-
-        @Override
-        public @Nullable Snowflake getGuildId() {
-            return event.getInteraction().getGuildId().orElse( null );
-        }
-
-        @Override
-        public User getUser() {
-            return event.getInteraction().getUser();
-        }
-
-        @Override
-        public Mono<Member> getMember() {
-            return Mono.justOrEmpty( event.getInteraction().getMember() );
-        }
-
-        @Override
-        public Mono<Member> getMember( final Snowflake guildId ) {
-            return event.getInteraction().getMember()
-                    .map( m -> ( User ) m )
-                    .orElse( getUser() )
-                    .asMember( guildId );
-        }
-
-        @Override
-        public Mono<MessageChannel> getChannel() {
-            return event.getInteraction().getChannel();
-        }
-
-        @Override
-        public Snowflake getChannelId() {
-            return event.getInteraction().getChannelId();
-        }
-
-        /**
-         * Retrieves the message that the component is attached to.
-         * 
-         * <p>If the message is ephemeral, only {@link #getMessageId() the ID}
-         * will be present.
-         *
-         * @return The message, or {@code null} if the message is ephemeral.
-         */
-        @Pure
-        public @Nullable Message getMessage() {
-            return event.getMessage().orElse( null );
-        }
-
-        /**
-         * Retrieves the ID of the message that the component is attached to.
-         *
-         * @return The message ID.
-         */
-        @Pure
-        public Snowflake getMessageId() {
-            return event.getMessageId();
-        }
-
-        /**
-         * Retrieves the interaction associated with the event.
-         *
-         * @return The interaction.
-         */
-        @Pure
-        public Interaction getInteraction() {
-            return event.getInteraction();
-        }
-
-        @Override
-        public Mono<Boolean> hasAccess( final Group group ) {
-            return validator.hasAccess( group );
-        }
 
     }
     

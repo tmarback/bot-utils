@@ -15,6 +15,11 @@ import reactor.core.publisher.Mono;
  *
  * @version 1.0
  * @since 1.0
+ * @implSpec A context must be effectively constant; that is, an implementation of this interface
+ *           must always return the same value on methods that return a direct value (such as
+ *           {@link #user()} or {@link #guildId()}). Methods that fetch remote resources
+ *           (i.e. that return a Mono) may return different objects over time (as the remote object
+ *           is modified), but must always reference the same entity.
  */
 public interface ChannelAccessContext extends AccessContext {
 
@@ -24,7 +29,7 @@ public interface ChannelAccessContext extends AccessContext {
      * @return The channel.
      */
     @SideEffectFree
-    Mono<? extends Channel> getChannel();
+    Mono<? extends Channel> channel();
 
     /**
      * Retrieves the ID of the channel.
@@ -32,7 +37,7 @@ public interface ChannelAccessContext extends AccessContext {
      * @return The channel's ID.
      */
     @Pure
-    Snowflake getChannelId();
+    Snowflake channelId();
 
     /**
      * Creates a copy of this context with the user replaced by the given user.
@@ -45,7 +50,7 @@ public interface ChannelAccessContext extends AccessContext {
     @Override
     default ChannelAccessContext asUser( final User user ) {
 
-        if ( Objects.equals( user.getId(), getUser().getId() ) ) {
+        if ( Objects.equals( user.getId(), user().getId() ) ) {
             return this;
         }
 

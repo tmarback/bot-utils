@@ -1,13 +1,12 @@
 package dev.sympho.bot_utils.access;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import reactor.core.publisher.Mono;
 
 /**
  * Validator that determines whether a caller has certain access rights in the
- * context of an event.
+ * context of a channel-based event.
  *
  * @version 1.0
  * @since 1.0
@@ -16,14 +15,14 @@ import reactor.core.publisher.Mono;
  *          current configuration.
  */
 @FunctionalInterface
-public interface AccessValidator {
+public interface ChannelAccessValidator extends AccessValidator {
 
     /**
      * Determines whether the invoking user in the current execution context has access 
      * equivalent to the given group.
      * 
      * <p>Note that while the most straightforward implementation of this interface is
-     * to simply check if the caller {@link GuildGroup#belongs(AccessContext) belongs}
+     * to simply check if the caller {@link Group#belongs(ChannelAccessContext) belongs}
      * to the given group, implementations are allowed to add other conditions under
      * which a user has equivalent permissions despite not belonging to the group
      * (or conversely does <i>not</i> have permissions despite <i>belonging</i> to
@@ -38,7 +37,14 @@ public interface AccessValidator {
      *           to be allowed (fail-closed).
      */
     @SideEffectFree
-    Mono<Boolean> hasAccess( GuildGroup group );
+    Mono<Boolean> hasAccess( Group group );
+
+    @Override
+    default Mono<Boolean> hasAccess( final GuildGroup group ) {
+
+        return hasAccess( ( Group ) group );
+
+    }
 
     /**
      * Determines whether the invoking user in the current execution context
@@ -55,29 +61,9 @@ public interface AccessValidator {
      *           safety measure (fails-closed).
      */
     @SideEffectFree
-    default Mono<Void> validate( final GuildGroup group ) {
+    default Mono<Void> validate( final Group group ) {
 
-        return validateResult( hasAccess( group ), group );
-
-    }
-
-    /**
-     * Verifies that an access check result passed, issuing an {@link AccessException} otherwise.
-     *
-     * @param result The access check result.
-     * @param group The required group.
-     * @return A Mono that completes empty if the caller has access equivalent to the given
-     *         group under the current execution context, or otherwise issues an error of type
-     *         {@link AccessException}.
-     * @see #validate(GuildGroup)
-     */
-    @SideEffectFree
-    static Mono<Void> validateResult( final Mono<Boolean> result, final Group group ) {
-
-        return result.defaultIfEmpty( false ) // Excess of caution
-                .filter( BooleanUtils::negate )
-                .flatMap( r -> Mono.error( new AccessException( group ) ) )
-                .then();
+        return AccessValidator.validateResult( hasAccess( group ), group );
 
     }
     

@@ -51,17 +51,17 @@ public final class Groups {
 
     /** The group that only matches the server owner. */
     public static final NamedGuildGroup SERVER_OWNER = named(
-            ctx -> ctx.getGuild()
+            ctx -> ctx.guild()
                     .map( Guild::getOwnerId )
-                    .map( ctx.getUser().getId()::equals ),
+                    .map( ctx.user().getId()::equals ),
             "Server Owner"
     );
 
     /** The group that only matches the bot owner. */
     public static final NamedGuildGroup BOT_OWNER = named(
-            ctx -> ctx.getClient().getApplicationInfo()
+            ctx -> ctx.client().getApplicationInfo()
                     .map( ApplicationInfo::getOwnerId )
-                    .map( ctx.getUser().getId()::equals ), 
+                    .map( ctx.user().getId()::equals ), 
             "Bot Owner" 
     );
 
@@ -74,7 +74,7 @@ public final class Groups {
      * permissions.
      */
     public static final NamedGuildGroup BOOSTER = named(
-            ctx -> ctx.getMember()
+            ctx -> ctx.member()
                     .map( Member::getPremiumTime )
                     .map( Optional::isPresent )
                     .defaultIfEmpty( false ),
@@ -475,7 +475,7 @@ public final class Groups {
      */
     public static GuildGroup isUser( final Mono<Snowflake> user ) {
 
-        return ctx -> user.map( ctx.getUser().getId()::equals );
+        return ctx -> user.map( ctx.user().getId()::equals );
 
     }
 
@@ -512,7 +512,7 @@ public final class Groups {
      */
     public static GuildGroup inWhitelist( final Flux<Snowflake> users ) {
 
-        return ctx -> users.any( ctx.getUser().getId()::equals );
+        return ctx -> users.any( ctx.user().getId()::equals );
 
     }
 
@@ -525,7 +525,7 @@ public final class Groups {
      */
     public static GuildGroup inWhitelist( final Mono<? extends Collection<Snowflake>> users ) {
 
-        return ctx -> users.map( u -> u.contains( ctx.getUser().getId() ) );
+        return ctx -> users.map( u -> u.contains( ctx.user().getId() ) );
 
     }
 
@@ -575,7 +575,7 @@ public final class Groups {
 
         return ctx -> {
             
-            final Flux<Snowflake> roles = ctx.getMember()
+            final Flux<Snowflake> roles = ctx.member()
                     .flatMapMany( Member::getRoles )
                     .map( Role::getId );
             
@@ -619,7 +619,7 @@ public final class Groups {
 
         return ctx -> {
             
-            final Flux<Snowflake> has = ctx.getMember()
+            final Flux<Snowflake> has = ctx.member()
                     .flatMapMany( Member::getRoles )
                     .map( Role::getId );
 
@@ -687,7 +687,7 @@ public final class Groups {
 
         return ctx -> {
             
-            final Mono<Set<Snowflake>> has = ctx.getMember()
+            final Mono<Set<Snowflake>> has = ctx.member()
                     .flatMapMany( Member::getRoles )
                     .map( Role::getId )
                     .collect( Collectors.toSet() );
@@ -708,7 +708,7 @@ public final class Groups {
 
         return ctx -> {
             
-            final Mono<Set<Snowflake>> has = ctx.getMember()
+            final Mono<Set<Snowflake>> has = ctx.member()
                     .flatMapMany( Member::getRoles )
                     .map( Role::getId )
                     .collect( Collectors.toSet() );
@@ -763,7 +763,7 @@ public final class Groups {
      */
     public static GuildGroup hasGuildPermissions( final Mono<PermissionSet> permissions ) {
 
-        return ctx -> ctx.getMember()
+        return ctx -> ctx.member()
                 .flatMap( Member::getBasePermissions )
                 .flatMap( p -> permissions.map( p::containsAll ) )
                 .defaultIfEmpty( true ); // Not in a guild
@@ -802,9 +802,9 @@ public final class Groups {
      */
     public static Group hasChannelPermissions( final Mono<PermissionSet> permissions ) {
 
-        return ctx -> ctx.getChannel()
+        return ctx -> ctx.channel()
                 .ofType( GuildChannel.class )
-                .flatMap( c -> c.getEffectivePermissions( ctx.getUser().getId() ) )
+                .flatMap( c -> c.getEffectivePermissions( ctx.user().getId() ) )
                 .flatMap( p -> permissions.map( p::containsAll ) )
                 .defaultIfEmpty( true ); // Not in a guild
 

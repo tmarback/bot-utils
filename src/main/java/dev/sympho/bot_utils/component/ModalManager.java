@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import dev.sympho.bot_utils.access.AccessManager;
+import dev.sympho.bot_utils.event.AbstractChannelEventContext;
+import dev.sympho.bot_utils.event.ModalContext;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ModalSubmitInteractionEvent;
 import discord4j.core.object.component.TextInput;
@@ -22,7 +24,7 @@ import reactor.core.publisher.Mono;
  */
 public class ModalManager extends ComponentManager<
                 ModalSubmitInteractionEvent,
-                ModalManager.ModalContext,
+                ModalContext,
                 ModalManager.HandlerFunction,
                 ModalManager.Handler,
                 ModalManager.HandlerEntry
@@ -67,7 +69,7 @@ public class ModalManager extends ComponentManager<
     protected ModalContext makeContext( final ModalSubmitInteractionEvent event, 
             final AccessManager accessManager ) {
 
-        return new ModalContext( event, accessManager );
+        return new ModalContextImpl( event, accessManager );
 
     }
 
@@ -151,8 +153,9 @@ public class ModalManager extends ComponentManager<
      *
      * @since 1.0
      */
-    public final class ModalContext 
-            extends ComponentManager.ComponentContext<ModalSubmitInteractionEvent> {
+    private static final class ModalContextImpl 
+            extends AbstractChannelEventContext<ModalSubmitInteractionEvent>
+            implements ModalContext {
 
         /** The input fields in the modal, keyed by custom ID. */
         private final Map<String, TextInput> fields;
@@ -163,8 +166,7 @@ public class ModalManager extends ComponentManager<
          * @param event The triggering event.
          * @param accessManager The access manager to use.
          */
-        @SuppressWarnings( "nullness:argument" ) // Initialized enough
-        private ModalContext( final ModalSubmitInteractionEvent event, 
+        ModalContextImpl( final ModalSubmitInteractionEvent event, 
                 final AccessManager accessManager ) {
 
             super( event, accessManager );
@@ -178,13 +180,7 @@ public class ModalManager extends ComponentManager<
             
         }
 
-        /**
-         * Retrieves the input field with the given custom ID.
-         *
-         * @param fieldId The custom ID.
-         * @return The input field with that ID.
-         * @throws IllegalArgumentException if there is no field in this context with that ID.
-         */
+        @Override
         public TextInput getField( final String fieldId ) throws IllegalArgumentException {
 
             final var val = fields.get( fieldId );
@@ -195,11 +191,7 @@ public class ModalManager extends ComponentManager<
 
         }
 
-        /**
-         * Retrieves the input fields in this context.
-         *
-         * @return The input fields.
-         */
+        @Override
         public Collection<TextInput> getFields() {
 
             return fields.values(); // Already pre-filtered for type.

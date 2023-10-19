@@ -38,20 +38,20 @@ class GuildOverrideAccessContext implements AccessContext {
     }
 
     @Override
-    public GatewayDiscordClient getClient() {
-        return base.getClient();
+    public GatewayDiscordClient client() {
+        return base.client();
     }
 
     @Override
-    public User getUser() {
-        return base.getUser();
+    public User user() {
+        return base.user();
     }
 
     @Override
-    public Mono<Guild> getGuild() {
+    public Mono<Guild> guild() {
         return guild == null 
                 ? Mono.empty() 
-                : base.getClient()
+                : base.client()
                         .getGuildById( guild )
                         .switchIfEmpty( Mono.error( () -> new IllegalArgumentException( 
                                 // IDK why the refinement thinks guild is nullable by this point
@@ -60,7 +60,7 @@ class GuildOverrideAccessContext implements AccessContext {
     }
 
     @Override
-    public @Nullable Snowflake getGuildId() {
+    public @Nullable Snowflake guildId() {
         return guild;
     }
 

@@ -26,13 +26,13 @@ class UserOverrideChannelAccessContext extends UserOverrideAccessContext<Channel
     }
 
     @Override
-    public Mono<? extends Channel> getChannel() {
-        return base.getChannel();
+    public Mono<? extends Channel> channel() {
+        return base.channel();
     }
 
     @Override
-    public Snowflake getChannelId() {
-        return base.getChannelId();
+    public Snowflake channelId() {
+        return base.channelId();
     }
     
 }

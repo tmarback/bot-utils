@@ -7,7 +7,8 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.Group;
 import dev.sympho.bot_utils.access.Groups;
-import dev.sympho.bot_utils.access.NamedGroup;
+import dev.sympho.bot_utils.event.AbstractChannelEventContext;
+import dev.sympho.bot_utils.event.ButtonContext;
 import dev.sympho.reactor_utils.concurrent.LockMap;
 import dev.sympho.reactor_utils.concurrent.NonblockingLockMap;
 import discord4j.common.util.Snowflake;
@@ -23,7 +24,7 @@ import reactor.core.publisher.Mono;
  */
 public class ButtonManager extends ComponentManager<
                 ButtonInteractionEvent,
-                ButtonManager.ButtonContext,
+                ButtonContext,
                 ButtonManager.HandlerFunction,
                 ButtonManager.Handler,
                 ButtonManager.HandlerEntry
@@ -71,33 +72,6 @@ public class ButtonManager extends ComponentManager<
 
     }
 
-    /**
-     * Validates that a caller has sufficient access to use a button. If the
-     * access is unsufficient, an error message is returned.
-     *
-     * @param context The button press context.
-     * @param group The group that the user must have access to in order to use the button.
-     * @return A Mono that fires an error message if the caller's access is unsufficient.
-     *         If the caller has sufficient access, it is an empty Mono.
-     */
-    @SideEffectFree
-    private Mono<String> checkPermission( final ButtonContext context,
-            final Group group ) {
-
-        return context.validate( group )
-                .map( r -> {
-                    if ( group instanceof NamedGroup g ) {
-                        return String.format( 
-                                "Only users in the %s group can use this button.",
-                                g.name()
-                        );
-                    } else {
-                        return "You cannot use this button.";
-                    }
-                } );
-
-    }
-
     @Override
     protected Class<ButtonInteractionEvent> getEventType() {
 
@@ -109,7 +83,7 @@ public class ButtonManager extends ComponentManager<
     protected ButtonContext makeContext( final ButtonInteractionEvent event, 
             final AccessManager accessManager ) {
 
-        return new ButtonContext( event, accessManager );
+        return new ButtonContextImpl( event, accessManager );
 
     }
 
@@ -117,7 +91,7 @@ public class ButtonManager extends ComponentManager<
     protected Mono<String> validateInteraction( final ButtonContext context, 
             final Handler handler ) {
 
-        return checkPermission( context, handler.group() );
+        return context.validate( handler.group() ).cast( String.class );
 
     }
 
@@ -140,10 +114,10 @@ public class ButtonManager extends ComponentManager<
 
         return ( ctx, id ) -> {
 
-            final var lock = locks.tryAcquire( ctx.getMessageId() );
+            final var lock = locks.tryAcquire( ctx.messageId() );
             if ( lock == null ) {
                 logger.debug( "Aborted due to lock acquire fail" );
-                return ctx.getEvent().reply()
+                return ctx.event().reply()
                         .withEphemeral( true )
                         .withContent( "Sorry, please try again." );
             }
@@ -268,8 +242,9 @@ public class ButtonManager extends ComponentManager<
      *
      * @since 1.0
      */
-    public final class ButtonContext 
-            extends ComponentManager.ComponentContext<ButtonInteractionEvent> {
+    private static final class ButtonContextImpl 
+            extends AbstractChannelEventContext<ButtonInteractionEvent> 
+            implements ButtonContext {
 
         /**
          * Creates a new instance.
@@ -277,8 +252,7 @@ public class ButtonManager extends ComponentManager<
          * @param event The triggering event.
          * @param accessManager The access manager to use.
          */
-        @SuppressWarnings( "nullness:argument" ) // Initialized enough
-        private ButtonContext( final ButtonInteractionEvent event, 
+        ButtonContextImpl( final ButtonInteractionEvent event, 
                 final AccessManager accessManager ) {
 
             super( event, accessManager );

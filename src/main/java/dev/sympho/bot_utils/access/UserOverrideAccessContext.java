@@ -37,23 +37,23 @@ class UserOverrideAccessContext<C extends AccessContext> implements AccessContex
     }
 
     @Override
-    public GatewayDiscordClient getClient() {
-        return base.getClient();
+    public GatewayDiscordClient client() {
+        return base.client();
     }
 
     @Override
-    public User getUser() {
+    public User user() {
         return user;
     }
 
     @Override
-    public Mono<Guild> getGuild() {
-        return base.getGuild();
+    public Mono<Guild> guild() {
+        return base.guild();
     }
 
     @Override
-    public @Nullable Snowflake getGuildId() {
-        return base.getGuildId();
+    public @Nullable Snowflake guildId() {
+        return base.guildId();
     }
 
     @Override
