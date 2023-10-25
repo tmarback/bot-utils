@@ -6,6 +6,7 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import discord4j.common.util.Snowflake;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.channel.MessageChannel;
 import reactor.core.publisher.Mono;
 
 /**
@@ -46,5 +47,8 @@ public interface MessageBasedContext extends ChannelEventContext {
      */
     @Pure
     Snowflake messageId();
+
+    @Override
+    Mono<? extends MessageChannel> channel();
     
 }

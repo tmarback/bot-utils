@@ -5,6 +5,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.channel.MessageChannel;
 import reactor.core.publisher.Mono;
 
 /**
@@ -39,6 +40,11 @@ public interface ComponentContext extends DeferrableInteractionEventContext, Mes
     @Override
     default Snowflake messageId() {
         return event().getMessageId();
+    }
+
+    @Override
+    default Mono<MessageChannel> channel() {
+        return DeferrableInteractionEventContext.super.channel();
     }
     
 }
