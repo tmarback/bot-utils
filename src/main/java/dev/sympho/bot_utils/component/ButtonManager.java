@@ -9,7 +9,7 @@ import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.Group;
 import dev.sympho.bot_utils.access.Groups;
 import dev.sympho.bot_utils.event.AbstractRepliableContext;
-import dev.sympho.bot_utils.event.ButtonContext;
+import dev.sympho.bot_utils.event.ButtonEventContext;
 import dev.sympho.bot_utils.event.reply.InteractionReplyManager;
 import dev.sympho.reactor_utils.concurrent.LockMap;
 import dev.sympho.reactor_utils.concurrent.NonblockingLockMap;
@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
  */
 public class ButtonManager extends ComponentManager<
                 ButtonInteractionEvent,
-                ButtonContext,
+                ButtonEventContext,
                 ButtonManager.HandlerFunction,
                 ButtonManager.Handler,
                 ButtonManager.HandlerEntry
@@ -82,7 +82,7 @@ public class ButtonManager extends ComponentManager<
     }
 
     @Override
-    protected ButtonContext makeContext( final ButtonInteractionEvent event, 
+    protected ButtonEventContext makeContext( final ButtonInteractionEvent event, 
             final AccessManager accessManager ) {
 
         return new ButtonContextImpl( event, accessManager );
@@ -90,7 +90,7 @@ public class ButtonManager extends ComponentManager<
     }
 
     @Override
-    protected Mono<String> validateInteraction( final ButtonContext context, 
+    protected Mono<String> validateInteraction( final ButtonEventContext context, 
             final Handler handler ) {
 
         return context.validate( handler.group() ).cast( String.class );
@@ -136,7 +136,7 @@ public class ButtonManager extends ComponentManager<
      * @since 1.0
      */
     @FunctionalInterface
-    public interface HandlerFunction extends ComponentManager.HandlerFunction<ButtonContext> {}
+    public interface HandlerFunction extends ComponentManager.HandlerFunction<ButtonEventContext> {}
 
     /**
      * Specification for the handling of a button.
@@ -246,7 +246,7 @@ public class ButtonManager extends ComponentManager<
      */
     private static final class ButtonContextImpl 
             extends AbstractRepliableContext<ButtonInteractionEvent> 
-            implements ButtonContext {
+            implements ButtonEventContext {
 
         /**
          * Creates a new instance.

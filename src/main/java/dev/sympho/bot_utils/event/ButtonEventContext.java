@@ -8,7 +8,7 @@ import discord4j.core.event.domain.interaction.ButtonInteractionEvent;
  * @version 1.0
  * @since 1.0
  */
-public interface ButtonContext extends ComponentContext {
+public interface ButtonEventContext extends ComponentContext {
 
     @Override
     ButtonInteractionEvent event();

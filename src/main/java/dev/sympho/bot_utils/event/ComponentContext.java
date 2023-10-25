@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
  * @version 1.0
  * @since 1.0
  */
-public interface ComponentContext extends DeferrableInteractionContext, MessageBasedContext {
+public interface ComponentContext extends DeferrableInteractionEventContext, MessageBasedContext {
 
     @Override
     ComponentInteractionEvent event();

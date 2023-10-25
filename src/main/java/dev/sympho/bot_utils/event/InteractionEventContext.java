@@ -18,7 +18,7 @@ import reactor.core.publisher.Mono;
  * @version 1.0
  * @since 1.0
  */
-public interface InteractionContext extends ChannelEventContext {
+public interface InteractionEventContext extends ChannelEventContext {
 
     @Override
     InteractionCreateEvent event();

@@ -8,7 +8,8 @@ import discord4j.core.event.domain.interaction.DeferrableInteractionEvent;
  * @version 1.0
  * @since 1.0
  */
-public interface DeferrableInteractionContext extends InteractionContext, RepliableContext {
+public interface DeferrableInteractionEventContext 
+        extends InteractionEventContext, RepliableContext {
 
     @Override
     DeferrableInteractionEvent event();

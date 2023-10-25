@@ -11,7 +11,7 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.event.AbstractRepliableContext;
-import dev.sympho.bot_utils.event.ModalContext;
+import dev.sympho.bot_utils.event.ModalEventContext;
 import dev.sympho.bot_utils.event.reply.InteractionReplyManager;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ModalSubmitInteractionEvent;
@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
  */
 public class ModalManager extends ComponentManager<
                 ModalSubmitInteractionEvent,
-                ModalContext,
+                ModalEventContext,
                 ModalManager.HandlerFunction,
                 ModalManager.Handler,
                 ModalManager.HandlerEntry
@@ -68,7 +68,7 @@ public class ModalManager extends ComponentManager<
     }
 
     @Override
-    protected ModalContext makeContext( final ModalSubmitInteractionEvent event, 
+    protected ModalEventContext makeContext( final ModalSubmitInteractionEvent event, 
             final AccessManager accessManager ) {
 
         return new ModalContextImpl( event, accessManager );
@@ -76,7 +76,7 @@ public class ModalManager extends ComponentManager<
     }
 
     @Override
-    protected Mono<String> validateInteraction( final ModalContext context, 
+    protected Mono<String> validateInteraction( final ModalEventContext context, 
             final Handler handler ) {
 
         return Mono.empty();
@@ -89,7 +89,7 @@ public class ModalManager extends ComponentManager<
      * @since 1.0
      */
     @FunctionalInterface
-    public interface HandlerFunction extends ComponentManager.HandlerFunction<ModalContext> {}
+    public interface HandlerFunction extends ComponentManager.HandlerFunction<ModalEventContext> {}
 
     /**
      * Specification for the handling of a modal submission.
@@ -157,7 +157,7 @@ public class ModalManager extends ComponentManager<
      */
     private static final class ModalContextImpl 
             extends AbstractRepliableContext<ModalSubmitInteractionEvent>
-            implements ModalContext {
+            implements ModalEventContext {
 
         /** The input fields in the modal, keyed by custom ID. */
         private final Map<String, TextInput> fields;
