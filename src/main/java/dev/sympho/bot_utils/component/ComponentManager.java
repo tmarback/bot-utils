@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import dev.sympho.bot_utils.access.AccessException;
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.NamedGroup;
-import dev.sympho.bot_utils.event.ComponentContext;
+import dev.sympho.bot_utils.event.ComponentEventContext;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
@@ -41,7 +41,7 @@ import reactor.core.publisher.Mono;
  */
 public abstract class ComponentManager<
                 E extends @NonNull ComponentInteractionEvent, 
-                C extends @NonNull ComponentContext,
+                C extends @NonNull ComponentEventContext,
                 HF extends ComponentManager.@NonNull HandlerFunction<C>,
                 H extends ComponentManager.@NonNull Handler<H, HF>,
                 HE extends ComponentManager.@NonNull HandlerEntry<H>
@@ -321,7 +321,7 @@ public abstract class ComponentManager<
      * @since 1.0
      */
     @FunctionalInterface
-    protected interface HandlerFunction<C extends @NonNull ComponentContext> 
+    protected interface HandlerFunction<C extends @NonNull ComponentEventContext> 
             extends BiFunction<C, String, Mono<?>> {
 
         /**

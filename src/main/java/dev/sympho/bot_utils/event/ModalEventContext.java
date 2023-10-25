@@ -11,7 +11,7 @@ import discord4j.core.object.component.TextInput;
  * @version 1.0
  * @since 1.0
  */
-public interface ModalEventContext extends ComponentContext {
+public interface ModalEventContext extends ComponentEventContext {
 
     @Override
     ModalSubmitInteractionEvent event();
