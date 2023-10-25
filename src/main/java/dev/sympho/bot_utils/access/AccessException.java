@@ -22,7 +22,7 @@ public final class AccessException extends RuntimeException {
     /**
      * The group that was required for access.
      */
-    public final Group group;
+    public final transient Group group;
 
     /**
      * Creates a new instance.

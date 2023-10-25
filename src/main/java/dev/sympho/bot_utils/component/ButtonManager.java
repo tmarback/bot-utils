@@ -1,5 +1,6 @@
 package dev.sympho.bot_utils.component;
 
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
@@ -7,8 +8,9 @@ import org.checkerframework.dataflow.qual.SideEffectFree;
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.Group;
 import dev.sympho.bot_utils.access.Groups;
-import dev.sympho.bot_utils.event.AbstractChannelEventContext;
+import dev.sympho.bot_utils.event.AbstractRepliableContext;
 import dev.sympho.bot_utils.event.ButtonContext;
+import dev.sympho.bot_utils.event.reply.InteractionReplyManager;
 import dev.sympho.reactor_utils.concurrent.LockMap;
 import dev.sympho.reactor_utils.concurrent.NonblockingLockMap;
 import discord4j.common.util.Snowflake;
@@ -243,7 +245,7 @@ public class ButtonManager extends ComponentManager<
      * @since 1.0
      */
     private static final class ButtonContextImpl 
-            extends AbstractChannelEventContext<ButtonInteractionEvent> 
+            extends AbstractRepliableContext<ButtonInteractionEvent> 
             implements ButtonContext {
 
         /**
@@ -252,10 +254,19 @@ public class ButtonManager extends ComponentManager<
          * @param event The triggering event.
          * @param accessManager The access manager to use.
          */
-        ButtonContextImpl( final ButtonInteractionEvent event, 
-                final AccessManager accessManager ) {
+        ButtonContextImpl( 
+                final ButtonInteractionEvent event, 
+                final AccessManager accessManager 
+        ) {
 
-            super( event, accessManager );
+            super( event, accessManager, new InteractionReplyManager( 
+                    "Button Pressed", 
+                    () -> List.of(
+                            ComponentManager.sourceField( event )
+                    ), 
+                    event, 
+                    false
+            ) );
             
         }
 

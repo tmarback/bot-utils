@@ -33,7 +33,7 @@ public interface ComponentContext extends DeferrableInteractionContext, MessageB
         final var msg = message();
         return msg == null 
                 ? Mono.empty()
-                : message().getClient().getMessageById( msg.getChannelId(), msg.getId() );
+                : msg.getClient().getMessageById( msg.getChannelId(), msg.getId() );
     }
 
     @Override

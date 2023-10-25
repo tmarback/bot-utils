@@ -1,6 +1,7 @@
 package dev.sympho.bot_utils.component;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -9,8 +10,9 @@ import java.util.stream.Collectors;
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
 import dev.sympho.bot_utils.access.AccessManager;
-import dev.sympho.bot_utils.event.AbstractChannelEventContext;
+import dev.sympho.bot_utils.event.AbstractRepliableContext;
 import dev.sympho.bot_utils.event.ModalContext;
+import dev.sympho.bot_utils.event.reply.InteractionReplyManager;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ModalSubmitInteractionEvent;
 import discord4j.core.object.component.TextInput;
@@ -154,7 +156,7 @@ public class ModalManager extends ComponentManager<
      * @since 1.0
      */
     private static final class ModalContextImpl 
-            extends AbstractChannelEventContext<ModalSubmitInteractionEvent>
+            extends AbstractRepliableContext<ModalSubmitInteractionEvent>
             implements ModalContext {
 
         /** The input fields in the modal, keyed by custom ID. */
@@ -169,7 +171,14 @@ public class ModalManager extends ComponentManager<
         ModalContextImpl( final ModalSubmitInteractionEvent event, 
                 final AccessManager accessManager ) {
 
-            super( event, accessManager );
+            super( event, accessManager, new InteractionReplyManager( 
+                    "Form Submitted", 
+                    () -> List.of(
+                            ComponentManager.sourceField( event )
+                    ), 
+                    event, 
+                    false
+            ) );
 
             this.fields = event.getComponents( TextInput.class )
                     .stream()

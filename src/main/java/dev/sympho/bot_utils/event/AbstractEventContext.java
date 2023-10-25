@@ -13,6 +13,7 @@ import discord4j.core.event.domain.Event;
  * class without any further overrides as they already have default methods pulling all
  * necessary data from the event.
  *
+ * @param <E> The event type.
  * @version 1.0
  * @since 1.0
  */
@@ -29,7 +30,7 @@ public abstract class AbstractEventContext<E extends @NonNull Event> implements 
      * @param event The triggering event.
      * @param accessManager The access manager to use.
      */
-    @SuppressWarnings( "nullness:argument" ) // Initialized enough
+    @SuppressWarnings( { "nullness:argument", "this-escape" } ) // Initialized enough
     protected AbstractEventContext( final E event, final AccessManager accessManager ) {
 
         this.event = event;

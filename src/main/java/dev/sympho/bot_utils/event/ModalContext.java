@@ -23,7 +23,7 @@ public interface ModalContext extends ComponentContext {
      * @return The input field with that ID.
      * @throws IllegalArgumentException if there is no field in this context with that ID.
      */
-    TextInput getField( final String fieldId ) throws IllegalArgumentException;
+    TextInput getField( String fieldId ) throws IllegalArgumentException;
 
     /**
      * Retrieves the input fields in this context.

@@ -20,8 +20,11 @@ import dev.sympho.bot_utils.access.AccessException;
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.NamedGroup;
 import dev.sympho.bot_utils.event.ComponentContext;
+import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
+import discord4j.core.spec.EmbedCreateFields;
+import discord4j.core.spec.EmbedCreateFields.Field;
 import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 
@@ -149,6 +152,38 @@ public abstract class ComponentManager<
     }
 
     /**
+     * Makes a link to the message that the component is on.
+     *
+     * @param event The event.
+     * @return The link.
+     */
+    private static String makeMessageUrl( final ComponentInteractionEvent event ) {
+
+        final var interaction = event.getInteraction();
+        final var guild = interaction.getGuildId().map( Snowflake::asString ).orElse( "@me" );
+        final var channel = interaction.getChannelId().asString();
+        @SuppressWarnings( "optional:method.invocation" ) // Components always have the message
+        final var message = interaction.getMessageId().orElseThrow().asString();
+        return "https://discord.com/channels/%s/%s/%s".formatted( guild, channel, message );
+
+    }
+
+    /**
+     * Formats a field that links to the message that the component is on.
+     *
+     * @param event The event.
+     * @return The field.
+     */
+    protected static Field sourceField( final ComponentInteractionEvent event ) {
+
+        return EmbedCreateFields.Field.of(
+            "Source Message",
+            makeMessageUrl( event ),
+            false
+        );
+    }
+
+    /**
      * Retrieves the interaction event type.
      *
      * @return The interaction event type.
@@ -186,7 +221,8 @@ public abstract class ComponentManager<
      * @return A Mono that completes after the error is reported.
      */
     @SideEffectFree
-    private Mono<?> reportFailure( final C context, final String message ) {
+    @SuppressWarnings( "nullness:return" ) // Idk what it's on about
+    private Mono<? extends @NonNull Object> reportFailure( final C context, final String message ) {
 
         return context.event()
                 .reply( message )

@@ -45,6 +45,12 @@ public interface AccessManager {
         return group -> doValidate( context, group, () -> group.belongs( context ) );
     }
 
+    /**
+     * Creates an access validator under the given context.
+     *
+     * @param context The access context for the current execution.
+     * @return The appropriate access validator.
+     */
     default AccessValidator validator( final AccessContext context ) {
         return group -> doValidate( context, group, () -> group.belongs( context ) );
     }
