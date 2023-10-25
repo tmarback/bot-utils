@@ -2,7 +2,6 @@ package dev.sympho.bot_utils.event;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
 
-import dev.sympho.bot_utils.access.AccessValidator;
 import dev.sympho.bot_utils.access.ChannelAccessContext;
 import dev.sympho.bot_utils.access.ChannelAccessValidator;
 import dev.sympho.bot_utils.access.Group;
@@ -45,7 +44,7 @@ public interface ChannelEventContext
 
     /**
      * @see #validator()
-     * @see AccessValidator#validate(Group)
+     * @see ChannelAccessValidator#validate(Group)
      * @apiNote This is a convenience shortcut for using the {@link #validator() context validator}.
      *          It is equivalent to {@code validator().validate(group)}.
      */

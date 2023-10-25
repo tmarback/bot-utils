@@ -50,7 +50,7 @@ public interface AccessValidator {
      *         {@link AccessException}.
      * @apiNote This is a convenience method for scenarios where a failed check interrupts
      *          execution immediately.
-     * @implSpec If the {@link #hasAccess(Group) access check} returns an empty result 
+     * @implSpec If the {@link #hasAccess(GuildGroup) access check} returns an empty result 
      *           (despite being a breach of the API), it is assumed to be a failed check as a 
      *           safety measure (fails-closed).
      */
