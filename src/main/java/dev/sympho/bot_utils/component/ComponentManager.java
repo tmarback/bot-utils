@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
-import java.util.function.UnaryOperator;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -20,6 +19,7 @@ import dev.sympho.bot_utils.access.AccessException;
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.NamedGroup;
 import dev.sympho.bot_utils.event.ComponentEventContext;
+import dev.sympho.bot_utils.event.reply.Reply;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ComponentInteractionEvent;
@@ -35,7 +35,6 @@ import reactor.core.publisher.Mono;
  * @param <C> The context type.
  * @param <HF> The handler function type.
  * @param <H> The handler type.
- * @param <HE> The handler entry type.
  * @version 1.0
  * @since 1.0
  */
@@ -43,8 +42,7 @@ public abstract class ComponentManager<
                 E extends @NonNull ComponentInteractionEvent, 
                 C extends @NonNull ComponentEventContext,
                 HF extends ComponentManager.@NonNull HandlerFunction<C>,
-                H extends ComponentManager.@NonNull Handler<H, HF>,
-                HE extends ComponentManager.@NonNull HandlerEntry<H>
+                H extends ComponentManager.@NonNull Handler<HF>
         > {
 
     /** Logger. */
@@ -83,29 +81,15 @@ public abstract class ComponentManager<
     /**
      * Registers a handler.
      *
-     * @param id The ID that invokes the handler.
-     * @param handler The handler to use.
+     * @param handler The handler to register.
      */
-    public void register( final String id, final H handler ) {
+    public void register( final H handler ) {
 
+        final var id = handler.id();
         logger.info( "Registering handler with ID {}", id );
         if ( handlers.put( id, handler ) != null ) {
             logger.warn( "Replaced handler with ID {}", id );
         }
-
-    }
-
-    /**
-     * Registers an interaction handler.
-     *
-     * @param handler The handler to use.
-     * @implSpec The default implementation directly delegates to 
-     *           {@link #register(String, Handler)}. If the entry type has additional configuration
-     *           options, this method should be overriden to use them.
-     */
-    public void register( final HE handler ) {
-
-        register( handler.id(), handler.handler() );
 
     }
 
@@ -130,7 +114,7 @@ public abstract class ComponentManager<
      * @apiNote This method is a convenience to register all handlers in a batch.
      */
     @SuppressWarnings( "HiddenField" )
-    public void registerAll( final Collection<HE> handlers ) {
+    public void registerAll( final Collection<H> handlers ) {
 
         handlers.forEach( this::register );
 
@@ -202,16 +186,22 @@ public abstract class ComponentManager<
     protected abstract C makeContext( E event, AccessManager access );
 
     /**
-     * Validates that the interaction is allowed.
+     * Executes the selected handler.
      *
-     * @param context The interaction context.
-     * @param handler The invoked handler.
-     * @return A mono that completes empty if the interaction is allowed, otherwise
-     *         issuing an error message to be sent to the user. Additionally, it may
-     *         result in an {@link AccessException} error to indicate an access issue.
+     * @param handler The handler to execute.
+     * @param context The execution context.
+     * @param args The execution arguments.
+     * @return A mono that completes when handling is complete. It may result in an
+     *         {@link AccessException} to indicate that the user does not have sufficient
+     *         permissions.
+     * @implSpec By default, it simply calls 
+     *           {@link HandlerFunction#apply(ComponentEventContext, String)}.
      */
-    @SideEffectFree
-    protected abstract Mono<String> validateInteraction( C context, H handler );
+    protected Mono<?> runHandler( final H handler, final C context, final String args ) {
+
+        return handler.handler().apply( context, args );
+        
+    }
 
     /**
      * Reports an error back to the user.
@@ -221,25 +211,12 @@ public abstract class ComponentManager<
      * @return A Mono that completes after the error is reported.
      */
     @SideEffectFree
-    @SuppressWarnings( "nullness:return" ) // Idk what it's on about
-    private Mono<? extends @NonNull Object> reportFailure( final C context, final String message ) {
+    // @SuppressWarnings( "nullness:return" ) // Idk what it's on about
+    protected Mono<Reply> reportFailure( final C context, final String message ) {
 
-        return context.event()
-                .reply( message )
-                .withEphemeral( true ); // Don't spam errors for everyone
-
-    }
-
-    /**
-     * Creates a handler function that just reports an error to the user.
-     *
-     * @param error The error to report.
-     * @return The function.
-     */
-    @SideEffectFree
-    private HandlerFunction<C> validationFailReporter( final String error ) {
-
-        return ( ctx, args ) -> reportFailure( ctx, error );
+        return context.reply()
+                .withContent( message )
+                .withPrivately( true ); // Don't spam errors for everyone
 
     }
 
@@ -268,10 +245,7 @@ public abstract class ComponentManager<
 
         final var context = makeContext( event, accessManager );
 
-        return validateInteraction( context, handler )
-                .map( this::validationFailReporter )
-                .defaultIfEmpty( handler.handler() ) 
-                .flatMap( h -> h.apply( context, args ) )
+        return runHandler( handler, context, args )
                 .cast( Object.class )
                 .onErrorResume( AccessException.class, ex -> {
                     final var message = ex.group instanceof NamedGroup g
@@ -341,40 +315,12 @@ public abstract class ComponentManager<
     /**
      * Specification for the handling of an interaction.
      *
-     * @param <SELF> The self type.
      * @param <HF> The handler function type.
      * @since 1.0
      * @apiNote Implementations may add more configuration values beyond the minimum
      *          required by this interface.
      */
-    protected interface Handler<SELF, HF extends @NonNull HandlerFunction<?>> {
-
-        /**
-         * The handler function.
-         *
-         * @return The handler function.
-         */
-        HF handler();
-
-        /**
-         * Composes this handler by transforming its handler function.
-         *
-         * @param transform The function to apply on the handler.
-         * @return The Handler obtained by transforming this handler's function.
-         */
-        SELF compose( UnaryOperator<HF> transform );
-
-    }
-
-    /**
-     * Specification for a handler to be registered.
-     *
-     * @param <H> The handler type.
-     * @since 1.0
-     * @apiNote Implementations may add more configuration values beyond the minimum
-     *          required by this interface.
-     */
-    protected interface HandlerEntry<H extends @NonNull Handler<H, ?>> {
+    protected interface Handler<HF extends @NonNull HandlerFunction<?>> {
 
         /**
          * The component ID.
@@ -384,11 +330,11 @@ public abstract class ComponentManager<
         String id();
 
         /**
-         * The handler to use.
+         * The handler function.
          *
-         * @return The handler to use.
+         * @return The handler function.
          */
-        H handler();
+        HF handler();
 
     }
     

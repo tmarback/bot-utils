@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
+import org.immutables.value.Value;
 
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.event.AbstractRepliableContext;
@@ -16,7 +16,6 @@ import dev.sympho.bot_utils.event.reply.InteractionReplyManager;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ModalSubmitInteractionEvent;
 import discord4j.core.object.component.TextInput;
-import reactor.core.publisher.Mono;
 
 /**
  * Centralized manager for modal submission handling.
@@ -24,12 +23,16 @@ import reactor.core.publisher.Mono;
  * @version 1.0
  * @since 1.0
  */
+@Value.Enclosing
+@Value.Style( 
+        visibility = Value.Style.ImplementationVisibility.PACKAGE,
+        overshadowImplementation = true
+)
 public class ModalManager extends ComponentManager<
                 ModalSubmitInteractionEvent,
                 ModalEventContext,
                 ModalManager.HandlerFunction,
-                ModalManager.Handler,
-                ModalManager.HandlerEntry
+                ModalManager.Handler
         > {
 
     /**
@@ -75,14 +78,6 @@ public class ModalManager extends ComponentManager<
 
     }
 
-    @Override
-    protected Mono<String> validateInteraction( final ModalEventContext context, 
-            final Handler handler ) {
-
-        return Mono.empty();
-
-    }
-
     /**
      * A function used to handle a modal submit event.
      *
@@ -94,59 +89,55 @@ public class ModalManager extends ComponentManager<
     /**
      * Specification for the handling of a modal submission.
      *
-     * @param handler The handler function.
      * @since 1.0
      */
-    public record Handler( 
-            HandlerFunction handler
-    ) implements ComponentManager.Handler<Handler, HandlerFunction> {
-
-        @Override
-        public Handler compose( final UnaryOperator<HandlerFunction> transform ) {
-
-            return new Handler( transform.apply( handler ) );
-
-        }
+    @Value.Immutable
+    public interface Handler extends ComponentManager.Handler<HandlerFunction> {
 
         /**
          * Creates a handler that uses the given function..
          *
+         * @param id The handler ID.
          * @param handler The function to handle events with.
          * @return The resulting handler.
          */
-        public static Handler of( final HandlerFunction handler ) {
+        static Handler of( final String id, final HandlerFunction handler ) {
 
-            return new Handler( handler );
+            return builder()
+                    .id( id )
+                    .handler( handler )
+                    .build();
 
         }
-
-    }
-
-    /**
-     * Specification for a handler to be registered.
-     *
-     * @param id The modal ID.
-     * @param handler The handler to use.
-     * @since 1.0
-     */
-    public record HandlerEntry(
-            String id,
-            Handler handler
-    ) implements ComponentManager.HandlerEntry<Handler> {
 
         /**
-         * Creates a handler with the given ID that uses the given function.
+         * Creates a new builder.
          *
-         * @param id The modal ID.
-         * @param handler The handler function to use.
-         * @return The resulting handler.
+         * @return The builder.
          */
-        public static HandlerEntry of( final String id, 
-                final HandlerFunction handler ) {
-
-            return new HandlerEntry( id, Handler.of( handler ) );
-
+        @SideEffectFree
+        static Builder builder() {
+            return new Builder();
         }
+
+        /**
+         * Creates a new builder initialized with the properties of the given handler.
+         *
+         * @param base The base instance to copy.
+         * @return The builder.
+         */
+        @SideEffectFree
+        static Builder builder( final Handler base ) {
+            return builder().from( base );
+        }
+        
+        /**
+         * The default builder.
+         *
+         * @since 1.0
+         */
+        @SuppressWarnings( "MissingCtor" )
+        class Builder extends ImmutableModalManager.Handler.Builder {}
 
     }
 

@@ -169,9 +169,9 @@ public class PaginationManager {
      *
      * @return The handler.
      */
-    public ButtonManager.HandlerEntry pageUpdateHandler() {
+    public ButtonManager.Handler pageUpdateHandler() {
 
-        return ButtonManager.HandlerEntry.of( BUTTON_ID_UPDATE, ( ctx, arg ) -> {
+        return ButtonManager.Handler.builder().handler( ( ctx, arg ) -> {
 
             final var decoded = decode( arg );
             final String id = decoded.getT1();
@@ -209,7 +209,10 @@ public class PaginationManager {
 
                     } );
 
-        }, true );
+        } )
+        .id( BUTTON_ID_UPDATE )
+        .mutex( true )
+        .build();
 
     }
 

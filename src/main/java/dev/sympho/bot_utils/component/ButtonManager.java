@@ -1,9 +1,9 @@
 package dev.sympho.bot_utils.component;
 
 import java.util.List;
-import java.util.function.UnaryOperator;
 
 import org.checkerframework.dataflow.qual.SideEffectFree;
+import org.immutables.value.Value;
 
 import dev.sympho.bot_utils.access.AccessManager;
 import dev.sympho.bot_utils.access.Group;
@@ -24,12 +24,16 @@ import reactor.core.publisher.Mono;
  * @version 1.0
  * @since 1.0
  */
+@Value.Enclosing
+@Value.Style( 
+        visibility = Value.Style.ImplementationVisibility.PACKAGE,
+        overshadowImplementation = true
+)
 public class ButtonManager extends ComponentManager<
                 ButtonInteractionEvent,
                 ButtonEventContext,
                 ButtonManager.HandlerFunction,
-                ButtonManager.Handler,
-                ButtonManager.HandlerEntry
+                ButtonManager.Handler
         > {
 
     /** Lock provider. */
@@ -65,16 +69,6 @@ public class ButtonManager extends ComponentManager<
     }
 
     @Override
-    public void register( final HandlerEntry handler ) {
-
-        final var id = handler.id();
-        final var handle = handler.handler();
-
-        register( id, handler.mutex() ? handle.compose( this::mutex ) : handle );
-
-    }
-
-    @Override
     protected Class<ButtonInteractionEvent> getEventType() {
 
         return ButtonInteractionEvent.class;
@@ -90,11 +84,19 @@ public class ButtonManager extends ComponentManager<
     }
 
     @Override
-    protected Mono<String> validateInteraction( final ButtonEventContext context, 
-            final Handler handler ) {
+    protected Mono<?> runHandler( 
+            final Handler handler, 
+            final ButtonEventContext context, 
+            final String args 
+    ) {
 
-        return context.validate( handler.group() ).cast( String.class );
-
+        return context.validate( handler.group() )
+                .thenReturn( handler.mutex()
+                        ? mutex( handler.handler() )
+                        : handler.handler()
+                )
+                .flatMap( h -> h.apply( context, args ) );
+        
     }
 
     /**
@@ -112,16 +114,14 @@ public class ButtonManager extends ComponentManager<
      * @param handler The handler to wrap.
      * @return The wrapped mutex handler.
      */
-    public HandlerFunction mutex( final HandlerFunction handler ) {
+    private HandlerFunction mutex( final HandlerFunction handler ) {
 
         return ( ctx, id ) -> {
 
             final var lock = locks.tryAcquire( ctx.messageId() );
             if ( lock == null ) {
                 logger.debug( "Aborted due to lock acquire fail" );
-                return ctx.event().reply()
-                        .withEphemeral( true )
-                        .withContent( "Sorry, please try again." );
+                return reportFailure( ctx, "Sorry, please try again." );
             }
 
             return lock.releaseAfter( Mono.defer( () -> handler.apply( ctx, id ) ) );
@@ -141,101 +141,69 @@ public class ButtonManager extends ComponentManager<
     /**
      * Specification for the handling of a button.
      *
-     * @param handler The handler function.
-     * @param group The group that the user must have access to in order to use the button.
      * @since 1.0
      */
-    public record Handler( 
-            HandlerFunction handler,
-            Group group
-    ) implements ComponentManager.Handler<Handler, HandlerFunction> {
+    @Value.Immutable
+    public interface Handler extends ComponentManager.Handler<HandlerFunction> {
 
-        @Override
-        public Handler compose( final UnaryOperator<HandlerFunction> transform ) {
-
-            return new Handler( transform.apply( handler ), group );
-
+        /**
+         * The group that the user must have access to in order to use the button.
+         * 
+         * <p>Defaults to everyone (no restriction).
+         *
+         * @return The group.
+         */
+        @Value.Default
+        default Group group() {
+            return Groups.EVERYONE;
         }
 
         /**
-         * Creates a handler that uses the given function and requires the given group.
+         * If {@code true}, then this handler will acquire a lock on the source message
+         * before executing.
+         * 
+         * <p>In other words, for any given message, at any given time, there is <b>at most</b>
+         * one handler currently executing that was triggered by a button on that message and
+         * have this value as {@code true}. If a mutex event occurs on a message while there is
+         * already one being handled, it will automatically fail and the user will be informed.
+         * 
+         * <p>Defaults to {@code false}.
          *
-         * @param handler The function to handle events with.
-         * @param group The group that the user must have access to in order to use the button.
-         * @return The resulting handler.
+         * @return Whether the handler has mutually-exclusive execution.
          */
-        public static Handler of( final HandlerFunction handler, final Group group ) {
-
-            return new Handler( handler, group );
-
+        @Value.Default
+        default boolean mutex() {
+            return false;
         }
 
         /**
-         * Creates a handler that uses the given function and requires no groups.
+         * Creates a new builder.
          *
-         * @param handler The function to handle events with.
-         * @return The resulting handler.
+         * @return The builder.
          */
-        public static Handler of( final HandlerFunction handler ) {
-
-            return of( handler, Groups.EVERYONE );
-
-        }
-
-    }
-
-    /**
-     * Specification for a handler to be registered.
-     *
-     * @param id The button ID.
-     * @param handler The handler to use.
-     * @param mutex If {@code true}, the given handler is converted into a 
-     *              {@link ButtonManager#mutex(HandlerFunction) mutex} before registering.
-     * @since 1.0
-     */
-    public record HandlerEntry(
-            String id,
-            Handler handler,
-            boolean mutex
-    ) implements ComponentManager.HandlerEntry<Handler> {
-
-        /**
-         * Creates a handler with the given ID that uses the given function and requires 
-         * the given group.
-         *
-         * @param id The button ID.
-         * @param handler The handler function to use.
-         * @param mutex If {@code true}, the handler will be converted into a 
-         *              {@link ButtonManager#mutex(HandlerFunction) mutex} before registering.
-         * @param group The group that the user must have access to in order to use the button.
-         * @return The resulting handler.
-         */
-        public static HandlerEntry of( final String id, 
-                final HandlerFunction handler, 
-                final boolean mutex, 
-                final Group group ) {
-
-            return new HandlerEntry( id, Handler.of( handler, group ), mutex );
-
+        @SideEffectFree
+        static Builder builder() {
+            return new Builder();
         }
 
         /**
-         * Creates a handler with the given ID that uses the given function and requires 
-         * no groups.
+         * Creates a new builder initialized with the properties of the given handler.
          *
-         * @param id The button ID.
-         * @param handler The handler function to use.
-         * @param mutex If {@code true}, the handler will be converted into a 
-         *              {@link ButtonManager#mutex(HandlerFunction) mutex} before registering.
-         * @return The resulting handler.
+         * @param base The base instance to copy.
+         * @return The builder.
          */
-        public static HandlerEntry of( final String id, 
-                final HandlerFunction handler,
-                final boolean mutex ) {
-
-            return new HandlerEntry( id, Handler.of( handler ), mutex );
-
+        @SideEffectFree
+        static Builder builder( final Handler base ) {
+            return builder().from( base );
         }
+        
+        /**
+         * The default builder.
+         *
+         * @since 1.0
+         */
+        @SuppressWarnings( "MissingCtor" )
+        class Builder extends ImmutableButtonManager.Handler.Builder {}
 
     }
 

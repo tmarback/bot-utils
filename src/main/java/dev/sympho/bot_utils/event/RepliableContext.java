@@ -4,6 +4,7 @@ import org.checkerframework.dataflow.qual.Pure;
 
 import dev.sympho.bot_utils.event.reply.Reply;
 import dev.sympho.bot_utils.event.reply.ReplyManager;
+import dev.sympho.bot_utils.event.reply.ReplyMono;
 import dev.sympho.bot_utils.event.reply.ReplySpec;
 import discord4j.core.spec.EmbedCreateSpec;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
@@ -31,6 +32,24 @@ public interface RepliableContext extends ChannelEventContext {
      */
     @Pure
     ReplyManager replies();
+
+    /**
+     * Sends a reply, as if by calling 
+     * {@link #replies()}.{@link ReplyManager#add() add()}.
+     * 
+     * <p>Sending more than one causes the replies to be chained
+     * (each replying to the previous one).
+     *
+     * @return A reply builder Mono that can be configured with the target reply then subscribed
+     *         to send the reply.
+     * @see #replies()
+     * @see ReplyManager#add()
+     */
+    default ReplyMono reply() {
+
+        return replies().add();
+
+    }
 
     /**
      * Sends a reply, as if by calling 
