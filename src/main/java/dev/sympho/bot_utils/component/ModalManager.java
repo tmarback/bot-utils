@@ -177,7 +177,7 @@ public class ModalManager extends ComponentManager<
                             ComponentManager.sourceField( event )
                     ), 
                     event, 
-                    false
+                    false, false
             ) );
 
             this.fields = event.getComponents( TextInput.class )

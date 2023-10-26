@@ -178,9 +178,17 @@ public interface ReplyManager {
      * <p>However, managers returned by this method are required to use a sending method that
      * does not expire, and so may be used in cases where the original reply manager might
      * expire before processing finishes.
+     * 
+     * <p>Note that some events (like slash commands) require a response to be sent natively
+     * or else it is considered to have failed; a best-effort attempt is made to catch cases
+     * where detaching is attempted before a required response and throw an exception early
+     * for visibily, however not all cases can be caught as it might depend on actions outside
+     * of the manager's control (for example a component interaction might be responded to by
+     * editing the original message instead).
      *
-     * @return A new detached manager. If no reply was sent yet, will result in an 
-     *         {@link IllegalStateException}.
+     * @return A new detached manager. May result in an {@link IllegalStateException} if the
+     *         manager detects that switching to a detached manager on the current state would
+     *         cause an error or timeout later.
      * @apiNote The detachment process occurs at subscription time, and the source manager
      *          <b>must</b> be valid at that time, so make sure to do so <b>before</b> a
      *          long processing period if needed.

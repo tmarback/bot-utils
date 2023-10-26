@@ -124,28 +124,10 @@ abstract class AbstractReplyManager implements ReplyManager {
     @SideEffectFree
     protected abstract ReplyManager doDetach();
 
-    /**
-     * Checks that the current state is appropriate for detaching then creates a new
-     * detached manager.
-     *
-     * @return The new manager.
-     * @throws IllegalStateException If the state is not currently appropriate.
-     */
-    @SideEffectFree
-    private ReplyManager doDetachValidate() throws IllegalStateException {
-
-        if ( replies.isEmpty() ) {
-            throw new IllegalStateException( "Cannot detach before sending a response" );
-        }
-
-        return doDetach();
-
-    }
-
     @Override
     public Mono<ReplyManager> detach() {
 
-        return Mono.fromSupplier( this::doDetachValidate )
+        return Mono.fromSupplier( this::doDetach )
                 .transform( sendLock::guard );
 
     }

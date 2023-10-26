@@ -32,6 +32,9 @@ public class InteractionReplyManager extends AbstractReplyManager {
     /** The backing interaction event. */
     private final DeferrableInteractionEvent event;
 
+    /** Whether to require that a reply is made before detaching. */
+    private final boolean requireReply;
+
     /**
      * Creates a new message.
      *
@@ -39,12 +42,14 @@ public class InteractionReplyManager extends AbstractReplyManager {
      * @param referenceFields Generator of the fields for the reference message.
      * @param event The backing interaction event.
      * @param defaultPrivate Whether replies are private by default.
+     * @param requireReply Whether to require that a reply is made before detaching.
      */
     public InteractionReplyManager( 
             final String referenceTitle,
             final Supplier<? extends Iterable<? extends Field>> referenceFields,
             final DeferrableInteractionEvent event, 
-            final boolean defaultPrivate 
+            final boolean defaultPrivate,
+            final boolean requireReply
     ) {
 
         super( defaultPrivate );
@@ -53,6 +58,7 @@ public class InteractionReplyManager extends AbstractReplyManager {
         this.referenceFields = referenceFields;
 
         this.event = event;
+        this.requireReply = requireReply;
 
     }
 
@@ -117,6 +123,10 @@ public class InteractionReplyManager extends AbstractReplyManager {
 
     @Override
     protected ReplyManager doDetach() {
+
+        if ( requireReply && replies.isEmpty() ) {
+            throw new IllegalStateException( "Cannot detach before sending a reply" );
+        }
 
         final var convertedReplies = replies.stream()
                 .map( r -> {
