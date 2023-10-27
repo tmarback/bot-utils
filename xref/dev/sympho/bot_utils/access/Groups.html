@@ -59,17 +59,17 @@
 <a class="jxr_linenumber" name="L51" href="#L51">51</a>  
 <a class="jxr_linenumber" name="L52" href="#L52">52</a>      <em class="jxr_javadoccomment">/** The group that only matches the server owner. */</em>
 <a class="jxr_linenumber" name="L53" href="#L53">53</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <a name="NamedGuildGroup" href="../../../../dev/sympho/bot_utils/access/NamedGuildGroup.html#NamedGuildGroup">NamedGuildGroup</a> SERVER_OWNER = named(
-<a class="jxr_linenumber" name="L54" href="#L54">54</a>              ctx -&gt; ctx.getGuild()
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>              ctx -&gt; ctx.guild()
 <a class="jxr_linenumber" name="L55" href="#L55">55</a>                      .map( Guild::getOwnerId )
-<a class="jxr_linenumber" name="L56" href="#L56">56</a>                      .map( ctx.getUser().getId()::equals ),
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>                      .map( ctx.user().getId()::equals ),
 <a class="jxr_linenumber" name="L57" href="#L57">57</a>              <span class="jxr_string">"Server Owner"</span>
 <a class="jxr_linenumber" name="L58" href="#L58">58</a>      );
 <a class="jxr_linenumber" name="L59" href="#L59">59</a>  
 <a class="jxr_linenumber" name="L60" href="#L60">60</a>      <em class="jxr_javadoccomment">/** The group that only matches the bot owner. */</em>
 <a class="jxr_linenumber" name="L61" href="#L61">61</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <a name="NamedGuildGroup" href="../../../../dev/sympho/bot_utils/access/NamedGuildGroup.html#NamedGuildGroup">NamedGuildGroup</a> BOT_OWNER = named(
-<a class="jxr_linenumber" name="L62" href="#L62">62</a>              ctx -&gt; ctx.getClient().getApplicationInfo()
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>              ctx -&gt; ctx.client().getApplicationInfo()
 <a class="jxr_linenumber" name="L63" href="#L63">63</a>                      .map( ApplicationInfo::getOwnerId )
-<a class="jxr_linenumber" name="L64" href="#L64">64</a>                      .map( ctx.getUser().getId()::equals ), 
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>                      .map( ctx.user().getId()::equals ), 
 <a class="jxr_linenumber" name="L65" href="#L65">65</a>              <span class="jxr_string">"Bot Owner"</span> 
 <a class="jxr_linenumber" name="L66" href="#L66">66</a>      );
 <a class="jxr_linenumber" name="L67" href="#L67">67</a>  
@@ -82,7 +82,7 @@
 <a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment">     * permissions.</em>
 <a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L76" href="#L76">76</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <a name="NamedGuildGroup" href="../../../../dev/sympho/bot_utils/access/NamedGuildGroup.html#NamedGuildGroup">NamedGuildGroup</a> BOOSTER = named(
-<a class="jxr_linenumber" name="L77" href="#L77">77</a>              ctx -&gt; ctx.getMember()
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>              ctx -&gt; ctx.member()
 <a class="jxr_linenumber" name="L78" href="#L78">78</a>                      .map( Member::getPremiumTime )
 <a class="jxr_linenumber" name="L79" href="#L79">79</a>                      .map( Optional::isPresent )
 <a class="jxr_linenumber" name="L80" href="#L80">80</a>                      .defaultIfEmpty( false ),
@@ -483,7 +483,7 @@
 <a class="jxr_linenumber" name="L475" href="#L475">475</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L476" href="#L476">476</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a name="GuildGroup" href="../../../../dev/sympho/bot_utils/access/GuildGroup.html#GuildGroup">GuildGroup</a> isUser( <strong class="jxr_keyword">final</strong> Mono&lt;Snowflake&gt; user ) {
 <a class="jxr_linenumber" name="L477" href="#L477">477</a> 
-<a class="jxr_linenumber" name="L478" href="#L478">478</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; user.map( ctx.getUser().getId()::equals );
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; user.map( ctx.user().getId()::equals );
 <a class="jxr_linenumber" name="L479" href="#L479">479</a> 
 <a class="jxr_linenumber" name="L480" href="#L480">480</a>     }
 <a class="jxr_linenumber" name="L481" href="#L481">481</a> 
@@ -520,7 +520,7 @@
 <a class="jxr_linenumber" name="L512" href="#L512">512</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L513" href="#L513">513</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a name="GuildGroup" href="../../../../dev/sympho/bot_utils/access/GuildGroup.html#GuildGroup">GuildGroup</a> inWhitelist( <strong class="jxr_keyword">final</strong> Flux&lt;Snowflake&gt; users ) {
 <a class="jxr_linenumber" name="L514" href="#L514">514</a> 
-<a class="jxr_linenumber" name="L515" href="#L515">515</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; users.any( ctx.getUser().getId()::equals );
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; users.any( ctx.user().getId()::equals );
 <a class="jxr_linenumber" name="L516" href="#L516">516</a> 
 <a class="jxr_linenumber" name="L517" href="#L517">517</a>     }
 <a class="jxr_linenumber" name="L518" href="#L518">518</a> 
@@ -533,7 +533,7 @@
 <a class="jxr_linenumber" name="L525" href="#L525">525</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L526" href="#L526">526</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a name="GuildGroup" href="../../../../dev/sympho/bot_utils/access/GuildGroup.html#GuildGroup">GuildGroup</a> inWhitelist( <strong class="jxr_keyword">final</strong> Mono&lt;? <strong class="jxr_keyword">extends</strong> Collection&lt;Snowflake&gt;&gt; users ) {
 <a class="jxr_linenumber" name="L527" href="#L527">527</a> 
-<a class="jxr_linenumber" name="L528" href="#L528">528</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; users.map( u -&gt; u.contains( ctx.getUser().getId() ) );
+<a class="jxr_linenumber" name="L528" href="#L528">528</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; users.map( u -&gt; u.contains( ctx.user().getId() ) );
 <a class="jxr_linenumber" name="L529" href="#L529">529</a> 
 <a class="jxr_linenumber" name="L530" href="#L530">530</a>     }
 <a class="jxr_linenumber" name="L531" href="#L531">531</a> 
@@ -583,7 +583,7 @@
 <a class="jxr_linenumber" name="L575" href="#L575">575</a> 
 <a class="jxr_linenumber" name="L576" href="#L576">576</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; {
 <a class="jxr_linenumber" name="L577" href="#L577">577</a>             
-<a class="jxr_linenumber" name="L578" href="#L578">578</a>             <strong class="jxr_keyword">final</strong> Flux&lt;Snowflake&gt; roles = ctx.getMember()
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>             <strong class="jxr_keyword">final</strong> Flux&lt;Snowflake&gt; roles = ctx.member()
 <a class="jxr_linenumber" name="L579" href="#L579">579</a>                     .flatMapMany( Member::getRoles )
 <a class="jxr_linenumber" name="L580" href="#L580">580</a>                     .map( Role::getId );
 <a class="jxr_linenumber" name="L581" href="#L581">581</a>             
@@ -627,7 +627,7 @@
 <a class="jxr_linenumber" name="L619" href="#L619">619</a> 
 <a class="jxr_linenumber" name="L620" href="#L620">620</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; {
 <a class="jxr_linenumber" name="L621" href="#L621">621</a>             
-<a class="jxr_linenumber" name="L622" href="#L622">622</a>             <strong class="jxr_keyword">final</strong> Flux&lt;Snowflake&gt; has = ctx.getMember()
+<a class="jxr_linenumber" name="L622" href="#L622">622</a>             <strong class="jxr_keyword">final</strong> Flux&lt;Snowflake&gt; has = ctx.member()
 <a class="jxr_linenumber" name="L623" href="#L623">623</a>                     .flatMapMany( Member::getRoles )
 <a class="jxr_linenumber" name="L624" href="#L624">624</a>                     .map( Role::getId );
 <a class="jxr_linenumber" name="L625" href="#L625">625</a> 
@@ -695,7 +695,7 @@
 <a class="jxr_linenumber" name="L687" href="#L687">687</a> 
 <a class="jxr_linenumber" name="L688" href="#L688">688</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; {
 <a class="jxr_linenumber" name="L689" href="#L689">689</a>             
-<a class="jxr_linenumber" name="L690" href="#L690">690</a>             <strong class="jxr_keyword">final</strong> Mono&lt;Set&lt;Snowflake&gt;&gt; has = ctx.getMember()
+<a class="jxr_linenumber" name="L690" href="#L690">690</a>             <strong class="jxr_keyword">final</strong> Mono&lt;Set&lt;Snowflake&gt;&gt; has = ctx.member()
 <a class="jxr_linenumber" name="L691" href="#L691">691</a>                     .flatMapMany( Member::getRoles )
 <a class="jxr_linenumber" name="L692" href="#L692">692</a>                     .map( Role::getId )
 <a class="jxr_linenumber" name="L693" href="#L693">693</a>                     .collect( Collectors.toSet() );
@@ -716,7 +716,7 @@
 <a class="jxr_linenumber" name="L708" href="#L708">708</a> 
 <a class="jxr_linenumber" name="L709" href="#L709">709</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; {
 <a class="jxr_linenumber" name="L710" href="#L710">710</a>             
-<a class="jxr_linenumber" name="L711" href="#L711">711</a>             <strong class="jxr_keyword">final</strong> Mono&lt;Set&lt;Snowflake&gt;&gt; has = ctx.getMember()
+<a class="jxr_linenumber" name="L711" href="#L711">711</a>             <strong class="jxr_keyword">final</strong> Mono&lt;Set&lt;Snowflake&gt;&gt; has = ctx.member()
 <a class="jxr_linenumber" name="L712" href="#L712">712</a>                     .flatMapMany( Member::getRoles )
 <a class="jxr_linenumber" name="L713" href="#L713">713</a>                     .map( Role::getId )
 <a class="jxr_linenumber" name="L714" href="#L714">714</a>                     .collect( Collectors.toSet() );
@@ -771,7 +771,7 @@
 <a class="jxr_linenumber" name="L763" href="#L763">763</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L764" href="#L764">764</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a name="GuildGroup" href="../../../../dev/sympho/bot_utils/access/GuildGroup.html#GuildGroup">GuildGroup</a> hasGuildPermissions( <strong class="jxr_keyword">final</strong> Mono&lt;PermissionSet&gt; permissions ) {
 <a class="jxr_linenumber" name="L765" href="#L765">765</a> 
-<a class="jxr_linenumber" name="L766" href="#L766">766</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; ctx.getMember()
+<a class="jxr_linenumber" name="L766" href="#L766">766</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; ctx.member()
 <a class="jxr_linenumber" name="L767" href="#L767">767</a>                 .flatMap( Member::getBasePermissions )
 <a class="jxr_linenumber" name="L768" href="#L768">768</a>                 .flatMap( p -&gt; permissions.map( p::containsAll ) )
 <a class="jxr_linenumber" name="L769" href="#L769">769</a>                 .defaultIfEmpty( <strong class="jxr_keyword">true</strong> ); <em class="jxr_comment">// Not in a guild</em>
@@ -810,9 +810,9 @@
 <a class="jxr_linenumber" name="L802" href="#L802">802</a> <em class="jxr_javadoccomment">     */</em>
 <a class="jxr_linenumber" name="L803" href="#L803">803</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <a name="Group" href="../../../../dev/sympho/bot_utils/access/Group.html#Group">Group</a> hasChannelPermissions( <strong class="jxr_keyword">final</strong> Mono&lt;PermissionSet&gt; permissions ) {
 <a class="jxr_linenumber" name="L804" href="#L804">804</a> 
-<a class="jxr_linenumber" name="L805" href="#L805">805</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; ctx.getChannel()
+<a class="jxr_linenumber" name="L805" href="#L805">805</a>         <strong class="jxr_keyword">return</strong> ctx -&gt; ctx.channel()
 <a class="jxr_linenumber" name="L806" href="#L806">806</a>                 .ofType( GuildChannel.<strong class="jxr_keyword">class</strong> )
-<a class="jxr_linenumber" name="L807" href="#L807">807</a>                 .flatMap( c -&gt; c.getEffectivePermissions( ctx.getUser().getId() ) )
+<a class="jxr_linenumber" name="L807" href="#L807">807</a>                 .flatMap( c -&gt; c.getEffectivePermissions( ctx.user().getId() ) )
 <a class="jxr_linenumber" name="L808" href="#L808">808</a>                 .flatMap( p -&gt; permissions.map( p::containsAll ) )
 <a class="jxr_linenumber" name="L809" href="#L809">809</a>                 .defaultIfEmpty( <strong class="jxr_keyword">true</strong> ); <em class="jxr_comment">// Not in a guild</em>
 <a class="jxr_linenumber" name="L810" href="#L810">810</a> 
