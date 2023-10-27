@@ -110,14 +110,11 @@ public interface ReplyManager {
      * Sends a new reply.
      *
      * @param content The message content.
-     * @return The created reply.
+     * @return A reply builder Mono initialized with the given content.
      */
-    default Mono<Reply> add( final String content ) {
+    default ReplyMono add( final String content ) {
 
-        final var spec = ReplySpec.builder()
-                .content( content )
-                .build();
-        return add( spec );
+        return add().withContent( content );
 
     }
 
@@ -125,14 +122,11 @@ public interface ReplyManager {
      * Sends a new reply.
      *
      * @param embeds The message embeds.
-     * @return The created reply.
+     * @return A reply builder Mono initialized with the given embeds.
      */
-    default Mono<Reply> add( final EmbedCreateSpec... embeds ) {
+    default ReplyMono add( final EmbedCreateSpec... embeds ) {
 
-        final var spec = ReplySpec.builder()
-                .embeds( Arrays.asList( embeds ) )
-                .build();
-        return add( spec );
+        return add().withEmbeds( Arrays.asList( embeds ) );
 
     }
 

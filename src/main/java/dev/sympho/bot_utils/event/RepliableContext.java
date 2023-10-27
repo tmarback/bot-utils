@@ -59,11 +59,11 @@ public interface RepliableContext extends ChannelEventContext {
      * (each replying to the previous one).
      *
      * @param content The message content.
-     * @return The sent reply.
+     * @return A reply builder Mono initialized with the given content.
      * @see #replies()
      * @see ReplyManager#add(String)
      */
-    default Mono<Reply> reply( final String content ) {
+    default ReplyMono reply( final String content ) {
 
         return replies().add( content );
 
@@ -77,11 +77,11 @@ public interface RepliableContext extends ChannelEventContext {
      * (each replying to the previous one).
      *
      * @param embeds The message embeds.
-     * @return The message.
+     * @return A reply builder Mono initialized with the given embeds.
      * @see #replies()
      * @see ReplyManager#add(EmbedCreateSpec...)
      */
-    default Mono<Reply> reply( final EmbedCreateSpec... embeds ) {
+    default ReplyMono reply( final EmbedCreateSpec... embeds ) {
 
         return replies().add( embeds );
 
