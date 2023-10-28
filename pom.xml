@@ -51,6 +51,11 @@
         <checker.version>3.38.0</checker.version> <!-- Version of the Checker framework used -->
         <d4j.version>3.2.6</d4j.version> <!-- Version of Discord4J used -->
         <reporter.version>1.2.1</reporter.version> <!-- Version of the tree reporter used -->
+        <!-- Settings for generated helper jars -->
+        <helpers.source>${project.basedir}/helpers</helpers.source>
+        <helpers.build>${project.build.directory}/helpers/jars</helpers.build>
+        <helpers.repository>${project.build.directory}/helpers/repository</helpers.repository>
+        <helpers.jar.checker>checker</helpers.jar.checker>
     </properties>
 
     <dependencyManagement>
@@ -587,6 +592,17 @@
         <!-- Stricter compiler checking -->
         <profile>
             <id>lint</id>
+            <repositories>
+
+                <repository>
+                    <id>helpers</id>
+                    <url>file:///${helpers.repository}</url>
+                    <releases>
+                        <checksumPolicy>ignore</checksumPolicy> <!-- Locally generated helper files, no checksum necessary -->
+                    </releases>
+                </repository>
+
+            </repositories>
             <build>
                 <plugins>
 
@@ -607,8 +623,53 @@
                     </plugin>
 
                     <plugin>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>generate-checker-config</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <classesDirectory>${helpers.source}/${helpers.jar.checker}</classesDirectory>
+                                    <outputDirectory>${helpers.build}</outputDirectory>
+                                    <classifier>${helpers.jar.checker}</classifier>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-install-plugin</artifactId>
+                        <executions>
+
+                            <execution>
+                                <id>install-checker-config</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>install-file</goal>
+                                </goals>
+                                <configuration>
+                                    <file>${helpers.build}/${project.build.finalName}-${helpers.jar.checker}.jar</file>
+                                    <artifactId>checker</artifactId>
+                                    <groupId>dev.sympho.helpers</groupId>
+                                    <version>GENERATED</version>
+                                    <packaging>jar</packaging>
+                                    <generatePom>true</generatePom>
+                                    <localRepositoryPath>${helpers.repository}</localRepositoryPath>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <executions>
+
                             <execution>
                                 <id>pre-compile</id>
                                 <phase>generate-sources</phase>
@@ -620,20 +681,24 @@
                                     <failOnWarning>false</failOnWarning>
                                 </configuration>
                             </execution>
+
                             <execution>
                                 <id>default-compile</id>
                                 <configuration>
                                     <fork>true</fork> <!-- Must fork or else JVM arguments are ignored. -->
-                                    <compilerArguments>
-                                        <Xmaxerrs>10000</Xmaxerrs>
-                                        <Xmaxwarns>10000</Xmaxwarns>
-                                    </compilerArguments>
                                     <annotationProcessorPaths>
         
                                         <path>
                                             <groupId>org.checkerframework</groupId>
                                             <artifactId>checker</artifactId>
                                             <version>${checker.version}</version>
+                                        </path>
+
+                                        <!-- Include Checker configuration jar -->
+                                        <path>
+                                            <groupId>dev.sympho.helpers</groupId>
+                                            <artifactId>checker</artifactId>
+                                            <version>GENERATED</version>
                                         </path>
                                         
                                         <!-- Add previously compiled classes for extra checker functionality -->
@@ -644,30 +709,21 @@
                                         </path>
 
                                         <!-- To make SLF4J not complain about no providers -->
-                                        <dependency>
+                                        <path>
                                             <groupId>org.slf4j</groupId>
                                             <artifactId>slf4j-simple</artifactId>
                                             <version>2.0.6</version>
-                                        </dependency>
+                                        </path>
         
                                     </annotationProcessorPaths>
-                                    <annotationProcessors>
-                                        <!-- Enabled checkers -->
-                                        <!-- See checker list at https://checkerframework.org/manual -->
-                                        <annotationProcessor>org.checkerframework.checker.nullness.NullnessChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.optional.OptionalChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.interning.InterningChecker</annotationProcessor>
-                                        <!-- <annotationProcessor>org.checkerframework.checker.lock.LockChecker</annotationProcessor> --> <!-- Not currently compatible with Streams (https://github.com/typetools/checker-framework/issues/5012) -->
-                                        <!-- <annotationProcessor>org.checkerframework.checker.index.IndexChecker</annotationProcessor> --> <!-- Crashes with pattern matching (https://github.com/typetools/checker-framework/issues/5013) -->
-                                        <!-- <annotationProcessor>org.checkerframework.checker.fenum.FenumChecker</annotationProcessor> --> <!-- Causes bound issues, not using fenum anyway -->
-                                        <annotationProcessor>org.checkerframework.checker.tainting.TaintingChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.regex.RegexChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.formatter.FormatterChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.signedness.SignednessChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.common.initializedfields.InitializedFieldsChecker</annotationProcessor>
-                                        <annotationProcessor>org.checkerframework.checker.resourceleak.ResourceLeakChecker</annotationProcessor>
-                                    </annotationProcessors>
+                                    <implicit>class</implicit>
                                     <compilerArgs>
+                                        <!-- Increase maximum errors/warnings -->
+                                        <arg>-Xmaxerrs</arg>
+                                        <arg>10000</arg>
+                                        <arg>-Xmaxwarns</arg>
+                                        <arg>10000</arg>
+                                        <!-- Configure linting and Checker -->
                                         <arg>-Xlint:all,-processing,-requires-transitive-automatic,-requires-automatic</arg>
                                         <!-- <arg>-AreportEvalWarns</arg> --> <!-- TODO: Too many issues for the time being -->
                                         <arg>-Astubs=./stubs</arg>
@@ -687,6 +743,7 @@
                                     </compilerArgs>
                                 </configuration>
                             </execution>
+
                         </executions>
                     </plugin>
 
