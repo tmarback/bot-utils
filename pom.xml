@@ -48,9 +48,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
-        <checker.version>3.39.0</checker.version> <!-- Version of the Checker framework used -->
-        <d4j.version>3.2.6</d4j.version> <!-- Version of Discord4J used -->
-        <reporter.version>1.2.1</reporter.version> <!-- Version of the tree reporter used -->
+        <!-- Dependency versions -->
+        <version.checker>3.39.0</version.checker> <!-- Checker framework -->
+        <version.d4j>3.2.6</version.d4j> <!-- Discord4J -->
+        <version.reporter>1.2.1</version.reporter> <!-- Tree reporter -->
         <!-- Settings for generated helper jars -->
         <helpers.source>${project.basedir}/helpers</helpers.source>
         <helpers.build>${project.build.directory}/helpers/jars</helpers.build>
@@ -97,7 +98,7 @@
         <dependency>
             <groupId>com.discord4j</groupId>
             <artifactId>discord4j-core</artifactId>
-            <version>${d4j.version}</version>
+            <version>${version.d4j}</version>
             <exclusions>
 
                 <exclusion>
@@ -142,13 +143,13 @@
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-qual</artifactId>
-            <version>${checker.version}</version>
+            <version>${version.checker}</version>
         </dependency>
 
         <dependency>
             <groupId>org.checkerframework</groupId>
             <artifactId>checker-util</artifactId>
-            <version>${checker.version}</version>
+            <version>${version.checker}</version>
         </dependency>
 
         <dependency>
@@ -291,8 +292,8 @@
                         <links>
                             <link>https://checkerframework.org/api/</link>
                             <link>https://projectreactor.io/docs/core/release/api/</link>
-                            <link>https://javadoc.io/doc/com.discord4j/discord4j-core/${d4j.version}/</link>
-                            <link>https://javadoc.io/doc/com.discord4j/discord4j-common/${d4j.version}/</link>
+                            <link>https://javadoc.io/doc/com.discord4j/discord4j-core/${version.d4j}/</link>
+                            <link>https://javadoc.io/doc/com.discord4j/discord4j-common/${version.d4j}/</link>
                         </links>
                     </configuration>
                 </plugin>
@@ -385,7 +386,7 @@
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
                         <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-                        <version>${reporter.version}</version>
+                        <version>${version.reporter}</version>
                     </dependency>
 
                 </dependencies>
@@ -407,7 +408,7 @@
                     <dependency>
                         <groupId>me.fabriciorby</groupId>
                         <artifactId>maven-surefire-junit5-tree-reporter</artifactId>
-                        <version>${reporter.version}</version>
+                        <version>${version.reporter}</version>
                     </dependency>
 
                 </dependencies>
@@ -691,7 +692,7 @@
                                         <path>
                                             <groupId>org.checkerframework</groupId>
                                             <artifactId>checker</artifactId>
-                                            <version>${checker.version}</version>
+                                            <version>${version.checker}</version>
                                         </path>
 
                                         <!-- Include Checker configuration jar -->
