@@ -347,7 +347,7 @@
                 <!-- none or multiple lifecycles -->
                 <plugin>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.3.1</version>
                     <configuration>
                         <configLocation>checkstyle.xml</configLocation>
                         <cacheFile>${project.build.directory}/checkstyle-cachefile</cacheFile>
