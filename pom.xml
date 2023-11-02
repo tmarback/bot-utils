@@ -49,7 +49,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
         <!-- Dependency versions -->
-        <version.checker>3.39.0</version.checker> <!-- Checker framework -->
+        <version.checker>3.40.0</version.checker> <!-- Checker framework -->
         <version.d4j>3.2.6</version.d4j> <!-- Discord4J -->
         <version.reporter>1.2.1</version.reporter> <!-- Tree reporter -->
         <!-- Settings for generated helper jars -->
